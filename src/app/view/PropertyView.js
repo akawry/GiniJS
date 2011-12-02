@@ -1,0 +1,24 @@
+Ext.define('GiniJS.view.PropertyView', {
+	constructor : function(config){
+		this.emptyStore = new Ext.data.Store({
+			requires: 'GiniJS.model.Property',
+			model: 'GiniJS.model.Property',
+			storeId: 'GiniJS.store.EmptyProperties'
+		});
+		GiniJS.view.PropertyView.superclass.constructor.call(this, config);
+	},
+	alias: 'widget.propertyview',
+	extend: 'Ext.grid.Panel',
+	store: this.emptyStore,
+	columns: [{
+		id: 'property',
+		header: 'Property',
+		dataIndex: 'property',
+		flex: 1
+	}, {
+		id: 'value',
+		header: 'Value',
+		dataIndex: 'value',
+		flex: 1
+	}]
+});
