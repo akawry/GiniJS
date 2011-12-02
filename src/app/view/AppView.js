@@ -4,16 +4,7 @@ Ext.define('GiniJS.view.AppView', {
 			title: 'Task Manager',
 			minWidth: 100,
 			width: 300,
-		});
-		
-		this.sampleConsole = Ext.create('GiniJS.view.Console', {
-			minWidth: 300,
-			width: 300,
-			height: 300,
-			title: 'Router 1'
-		});
-		
-		this.sampleConsole.show();			
+		});		
 		
 		GiniJS.view.AppView.superclass.constructor.call(this, config);
 	},
