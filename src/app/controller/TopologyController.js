@@ -16,6 +16,7 @@ Ext.define('GiniJS.controller.TopologyController', {
 		this.control ({
 			'canvasview' : {
 				'insertnode' : this.onInsertNode,
+				'dragnode' : this.onDragNode,
 				'rightclick' : this.onNodeRightClick,			
 			}, 
 			'interfaceview > toolbar > button' : {
@@ -119,24 +120,21 @@ Ext.define('GiniJS.controller.TopologyController', {
 			id: id,
 			width: data.componentData.width,
 			height: data.componentData.height,
-			src: data.componentData.icon
-		
-			//TODO : Handle making components draggable ... 
-			
-			/*draggable: {
+			src: data.componentData.icon,
+			draggable: {
 				constrain: true,
 				constrainTo: canvas.getEl()
-        }*/,
-        listeners : {
-	        'click' : this.onNodeClick,
-	        scope : this
-	     },
-	     model : node
+			},
+			listeners : {
+				'click' : this.onNodeClick,
+				scope : this
+			},
+			model : node
 		});
 		node.set('sprite', sprite);
 		canvas.surface.add(sprite).show(true);	 		 
 			 
-		switch (	data.componentData.type ){
+		switch ( data.componentData.type ){
 			case "Router":
 				this.onInsertRouter(node);
 				break;
@@ -174,7 +172,15 @@ Ext.define('GiniJS.controller.TopologyController', {
 				
 		store.add(node);			
 					
-	},	
+	},
+	
+	onDragNode : function(ddSource, e, data, canvas){
+		console.log("Drag event: ", ddSource, e, data, canvas);
+		var sprite = data.sprite;
+		sprite.x = Ext.fly(e.target).getX() - canvas.getEl().getX();
+		sprite.y = Ext.fly(e.target).getY() - canvas.getEl().getY();
+		this.redrawConnections(data.sprite);
+	},
 	
 	onInsertRouter : function(data){
 		console.log("Inserting router ... ", data);
@@ -267,7 +273,7 @@ Ext.define('GiniJS.controller.TopologyController', {
 	},
 	
 	onNodeRightClick : function(e){
-		var sprite, x, y, me = this;
+		var sprite, x, y, me = this,
 			 store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore');
 		store.each(function(rec){
 			sprite = rec.get('sprite');
@@ -417,6 +423,18 @@ Ext.define('GiniJS.controller.TopologyController', {
 		this.canvas.surface.add(sprite).show(true);
 		this.canvas.surface.add(start).show(true);
 		this.canvas.surface.add(end).show(true);
+	},
+	
+	redrawConnections : function(sprite){
+		var sprites = sprite.model.get('connection_sprites');
+		Ext.each(sprites, function(s){
+			s.destroy();
+		})
+		sprite.model.set('connection_sprites', []);
+		var me = this;
+		sprite.model.connections().each(function(con){
+			me.onDrawConnection(sprite, con.get('sprite'));
+		});
 	},
 
 	
