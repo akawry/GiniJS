@@ -60,7 +60,7 @@ var gserver_socket = null;
 
 io.sockets.on('connection', function (socket) {
 	
-	var gserv = process['gserver'];
+	var gserv = processes['gserver'];
 	if (gserv){
 		// need some timeout to let the gserver start up!
 		setTimeout(function(){
