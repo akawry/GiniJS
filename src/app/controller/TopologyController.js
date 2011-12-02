@@ -413,10 +413,15 @@ Ext.define('GiniJS.controller.TopologyController', {
 			'stroke' : '#000000'
 		});
 		
+		start.remove();
+		end.remove();
+		
 		start.model.get('connection_sprites').push(sprite);
 		end.model.get('connection_sprites').push(sprite);
 		
 		this.canvas.surface.add(sprite).show(true);
+		this.canvas.surface.add(start).show(true);
+		this.canvas.surface.add(end).show(true);
 	},
 
 	
@@ -437,14 +442,10 @@ Ext.define('GiniJS.controller.TopologyController', {
 		switch (startType){
 			case "UML":
 
-				if (endType === "Switch"){
-					success = true;			
-			
-				} else if (endType === "Subnet") {
-	
-					if (sm.connections().getCount() > 1){
-						errorMsg = "UML cannot have more than one connection!";
-					} else {
+				if (sm.connections().getCount() > 0){
+					errorMsg = "UML cannot have more than one connection!";
+				} else {
+					if (endType === "Switch" || endType == "Subnet"){
 						success = true;
 					}
 				}
@@ -454,12 +455,18 @@ Ext.define('GiniJS.controller.TopologyController', {
 			case "Switch":
 			
 				if (endType === "UML"){
-					success = true;
+					if (em.connections().getCount() > 0){
+						errorMsg = "UML cannot have more than one connection!";
+					} else {
+						success = true;
+					}
 					
 				} else if (endType === "Subnet"){
 					
 					if (sm.connectionsWith("Subnet").length > 0){
 						errorMsg = "Switch cannot have more than one Subnet!";
+					} else if (em.connectionsWith("Switch").length > 0){
+						errorMsg = "Subnet cannot have more than one Switch!";
 					} else {
 						success = true;
 					}
@@ -487,6 +494,7 @@ Ext.define('GiniJS.controller.TopologyController', {
 				} else {
 					if (endType === "Router"){
 						success = true;
+						
 					} else if (endType === "Switch"){
 						
 						if (sm.connectionsWith("Switch").length > 0){
@@ -494,8 +502,13 @@ Ext.define('GiniJS.controller.TopologyController', {
 						} else {
 							success = true;
 						}
+						
 					} else if (endType === "UML"){
-						success = true;
+						if (em.connections().getCount() > 0){
+							errorMsg = "UML cannot have more than one connection!"
+						} else {
+							success = true;
+						}
 					}
 				}
 				
