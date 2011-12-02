@@ -261,17 +261,10 @@ Ext.define('GiniJS.controller.TopologyController', {
 			return false;
 		}
 		this.selected = node.model;
-		this.refreshViews();
+		this.application.fireEvent('refreshviews', {
+			selected: this.selected
+		});
 	},
-	
-	// TODO: put this logic in the View Controller .... 
-	refreshViews : function(){
-		var store = Ext.isEmpty(this.selected) ? Ext.data.StoreManager.lookup('GiniJS.store.EmptyProperties') : this.selected.properties();
-		Ext.ComponentQuery.query('propertyview')[0].reconfigure(store);
-		store = (Ext.isEmpty(this.selected) || Ext.isEmpty(this.selected.get('iface'))) ? Ext.data.StoreManager.lookup('GiniJS.store.EmptyInterfaces') : this.selected.get('iface').properties();
-		Ext.ComponentQuery.query('interfaceview')[0].reconfigure(store);
-	},
-	
 	
 	onNodeRightClick : function(e){
 		var sprite, x, y, me = this;
@@ -385,8 +378,10 @@ Ext.define('GiniJS.controller.TopologyController', {
 					b.set('iface', b.interfaces().first());
 				}	
 				
-				me.refreshViews();
-			}	
+				me.application.fireEvent('refreshviews', {
+					selected: this.selected
+				});
+			}
 		}		
 		
 		// remove connections from other nodes
@@ -636,15 +631,15 @@ Ext.define('GiniJS.controller.TopologyController', {
 		if (btn.text === "<"){
 			if (idx > 0){
 				this.selected.set('iface', this.selected.interfaces().getAt(idx - 1));
-				Ext.ComponentQuery.query('interfaceview')[0].reconfigure(this.selected.get('iface').properties());
 			}			
 		} else if (btn.text === ">"){
 			if (idx < this.selected.interfaces().getCount() - 1){
 				this.selected.set('iface', this.selected.interfaces().getAt(idx + 1));
-				Ext.ComponentQuery.query('interfaceview')[0].reconfigure(this.selected.get('iface').properties());
 			}
 		}
-		 
+		this.application.fireEvent('refreshviews', {
+			selected: this.selected
+		}); 
 	}
 	
 });

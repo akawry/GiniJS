@@ -13,7 +13,7 @@ Ext.application({
 	name: 'GiniJS',
 	models: ['TopologyNode', 'Component', 'Property', 'Interface', 'Task'],
 	views: ['AppView'],
-	controllers: ['ViewController', 'TopologyController', 'ActionController'],
+	controllers: ['ViewController', 'TopologyController', 'ActionController', 'CommunicationController'],
 	stores: ['TopologyStore', 'TaskStore', 'ComponentStore'],
 	launch : function(){
 		console.log("Launching GiniJS...");

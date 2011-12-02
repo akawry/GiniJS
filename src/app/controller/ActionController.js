@@ -48,6 +48,45 @@ Ext.define('GiniJS.controller.ActionController', {
 	
 	onRunSelect : function(data){
 		console.log("Item selected from the 'Run' menu...", data);
+		switch (data.text){
+			case "Run":
+				console.log("Sending run command to server ... ");
+				
+				Ext.Ajax.request({
+					url: '/command',
+					params: {
+						type: 'run'
+					},
+					success : function(res){
+						console.log(res);
+					}
+				});
+				
+				break;
+				
+			case "Start Server":
+				console.log("Sending server start command to server ... ");
+				
+				Ext.Ajax.request({
+					url: '/command',
+					jsonData : {
+						type: 'start_server'
+					},
+					success : function(res){
+						var obj = Ext.decode(res.responseText);
+						console.log("Got a response!", obj);
+						if (!obj.error){
+							console.log("Should open the socket.io connection now ... ");
+							this.application.fireEvent('gserver', {
+								type: 'do_connect'
+							});
+						}
+					},
+					scope : this
+				});
+				
+				break;
+		}
 	},
 	
 	onConfigSelect : function(data){
