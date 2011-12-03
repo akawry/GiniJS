@@ -11,6 +11,13 @@ Ext.define('GiniJS.controller.CommunicationController', {
 					break;
 			}
 		}, this);
+		
+		this.control({
+			'console' : {
+				'command' : this.onCommand,
+				scope : this
+			}
+		});
 	},
 	
 	ongServerConnect : function(e){
@@ -31,5 +38,19 @@ Ext.define('GiniJS.controller.CommunicationController', {
 			msg: data.msg,
 			name: 'gServer'
 		});
+	},
+	
+	onCommand : function(cons, cmd){
+		console.log("Sending console command to server: ", cons, cmd);
+		Ext.Ajax.request({
+			url: '/console',
+			jsonData : {
+				console: cons.title, 
+				command: cmd
+			},
+			success : function(res){
+				console.log("Command produced server response: ", res);
+			}
+		});	
 	}
 });

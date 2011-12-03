@@ -1,12 +1,4 @@
-function getNodeByType(type){
-	var store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore');
-	var r = [];
-	store.each(function(rec){
-		if (rec.get('node').get('type') === type)
-			r.push(rec);
-	});
-	return r;
-}
+
 
 Ext.define('GiniJS.controller.TopologyController', {
 	extend: 'Ext.app.Controller',
@@ -23,6 +15,15 @@ Ext.define('GiniJS.controller.TopologyController', {
 				'click' : this.onInterfaceChange
 			}
 		});
+		
+		this.routers = 0;
+		this.umls = 0;
+		this.switches = 0;
+		this.subnets = 0;
+		this.firewalls = 0;
+		this.uml_freedoss = 0;
+		this.uml_androids = 0;
+		this.mobiles = 0;
 		
 		this.rightClickMenus = {};
 		this.rightClickMenus["UML"] = Ext.create('Ext.menu.Menu', {
@@ -87,6 +88,16 @@ Ext.define('GiniJS.controller.TopologyController', {
 			}
 		});
 		
+	},
+	
+	getNodeByType : function(type){
+		var store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore');
+		var r = [];
+		store.each(function(rec){
+			if (rec.get('node').get('type') === type)
+				r.push(rec);
+		});
+		return r;
 	},
 	
 	onInsertNode : function(ddSource, e, data, canvas){
@@ -184,52 +195,53 @@ Ext.define('GiniJS.controller.TopologyController', {
 	
 	onInsertRouter : function(data){
 		console.log("Inserting router ... ", data);
-		data.setProperty('name', 'Router_' + (getNodeByType("Router").length + 1));
+		data.setProperty('name', 'Router_' + (++this.routers));
 	},
 	
 	onInsertUML : function(data){
 		console.log("Inserting UML ... ", data);
-		data.setProperty('name', 'UML_' + (getNodeByType("UML").length + 1));
+		data.setProperty('name', 'UML_' + (++this.umls));
 		
 		// Are these dynamically allocated ?
 		data.setProperty('filesystem', 'root_fs_beta2');
 		data.setProperty('filetype', 'cow');
+		
 	},
 	
 	onInsertSwitch : function(data){
 		console.log("Inserting Switch ... ", data);
-		data.setProperty('name', 'Switch_' + (getNodeByType("Switch").length + 1));
+		data.setProperty('name', 'Switch_' + (++this.switches));
 		data.setProperty('Hub mode', false); 
 	},
 	
 	onInsertSubnet : function(data){
 		console.log("Inserting Subnet ... ", data);
-		data.setProperty('name', 'Subnet_' + (getNodeByType("Subnet").length + 1));
+		data.setProperty('name', 'Subnet_' + (++this.subnets));
 	},
 	
 	onInsertFreeDOS : function(data){
 		console.log("Inserting Free DOS ... ", data);
-		data.setProperty('name', 'UML_FreeDOS_' + (getNodeByType("UML_FreeDOS").length + 1));
+		data.setProperty('name', 'UML_FreeDOS_' + (++this.uml_freedoss));
 	},
 	
 	onInsertMobile : function(data){
 		console.log("Inserting Mobile ... ", data);
-		data.setProperty('name', 'Mobile_' + (getNodeByType("Mobile").length + 1));
+		data.setProperty('name', 'Mobile_' + (++this.mobiles));
 	},
 	
 	onInsertUMLAndroid : function(data){
 		console.log("Inserting Android UML ... ", data);
-		data.setProperty('name', 'UML_Android_' + (getNodeByType("UML_Android").length + 1));
+		data.setProperty('name', 'UML_Android_' + (++this.uml_androids));
 	},
 	
 	onInsertFirewall : function(data){
 		console.log("Inserting Firewall ... ", data);
-		data.setProperty('name', 'Firewall_' + (getNodeByType("Firewall").length + 1));
+		data.setProperty('name', 'Firewall_' + (++this.firewalls));
 	},
 	
 	onInsertWirelessAccessPoint : function(data){
 		console.log("Inserting Wirless Access Point ... ", data);
-		data.setProperty('name', 'Wireless_access_point_' + (getNodeByType("Wireless_access_point").length + 1));
+		data.setProperty('name', 'Wireless_access_point_' + (++this.wireless_access_points));
 	},
 	
 	onNodeClick : function(node, e, eOpts){
@@ -391,9 +403,9 @@ Ext.define('GiniJS.controller.TopologyController', {
 		}		
 		
 		// remove connections from other nodes
-		Ext.each(node.get('connections'), function(con){
-			var cons = con.get('connections');
-			cons.splice(cons.indexOf(node), 1);
+		node.connections().each(function(con){
+			console.log(con);
+			con.connections().remove(node);
 		});
 		
 		// remove from the store of nodes 

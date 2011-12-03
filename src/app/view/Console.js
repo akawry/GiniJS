@@ -10,6 +10,7 @@ var handleKeyPress = function(field, e, eOpts){
 
 Ext.define('GiniJS.view.Console', {
 	extend: 'Ext.window.Window',
+	alias: 'widget.console',
 	layout: {
 		type: 'vbox',
 		align: 'stretch'
@@ -31,7 +32,7 @@ Ext.define('GiniJS.view.Console', {
 		panel.body.insertHtml("beforeEnd", this.title+": "+cmd+"<br/>");
 		var d = panel.body.dom;
 		d.scrollTop = d.scrollHeight - d.offsetHeight;
-		// TODO: send this to the actual gini ...
+		this.fireEvent('command', this, cmd);
 	}
 	
 });

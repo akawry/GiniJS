@@ -40,7 +40,14 @@ app.post('/command', function(req, res){
 			
 			if (!processes['gserver']){
 				console.log("Spawning gServer process...");
-				processes['gserver'] = spawn('gserver', [33001]);
+				processes['gserver'] = spawn('gserver');
+				setTimeout(function(){
+					gserver_socket = net.createConnection(9000);
+					gserver_socket.on('connect', function(){
+						console.log("Conected to the gserver ... ");
+					});
+				}, 1000);
+				
 				res.json({}); // ok
 			} else {
 				res.json({
@@ -48,6 +55,23 @@ app.post('/command', function(req, res){
 				});
 			}
 			break;
+	}
+});
+
+app.post('/console', function(req, res){
+	var cons = req.param('console').toLowerCase(),
+		cmd = req.param('command'),
+		child = processes[cons];
+	
+	if (child){
+		console.log("Sending command to child: ", cons, cmd);
+		if (cons === "gserver"){
+			console.log("sending via socket");
+			gserver_socket.write(cmd);
+		} else {
+			console.log("sending via stdin");
+			child.stdin.write(cmd);
+		}
 	}
 });
 
@@ -59,29 +83,27 @@ var processes = {};
 var gserver_socket = null;
 
 io.sockets.on('connection', function (socket) {
-	
-	var gserv = processes['gserver'];
-	if (gserv){
-		// need some timeout to let the gserver start up!
-		setTimeout(function(){
-			gserver_socket = net.createConnection(33001);
-			gserver_socket.on('connect', function(){
-				console.log("Conected to the gserver ... ");
+	var process;
+	for (var p in processes){
+		process = processes[p];
+		process.stdout.on('data', function(data){
+			console.log("Emitting to client: ", data);
+			socket.emit('process_msg', {
+				msg: data,
+				process: p
 			});
-			gserver_socket.on('data', function(data){
-				console.log("Got some gserver data:", data);
-				socket.emit('gserver', {
-					msg: data
+		});
+		if (p === "gserver"){
+			setTimeout(function(){
+				console.log("Attaching listener to gserver socket for incoming data .... ");
+				gserver_socket.on('data', function(data){
+					console.log("Emitting to client (received via socket)", data);
+					socket.emit('process_msg', {
+						msg: data,
+						process: p
+					});
 				});
-			});
-			
-			gserv.stdout.on('data', function(data){
-				console.log("Got some gserver data:", data);
-				socket.emit('gserver', {
-					msg: data
-				});
-			});
-			
-		}, 1000);
+			}, 1000);
+		}
 	}
 });
