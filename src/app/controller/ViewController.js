@@ -23,11 +23,15 @@ Ext.define('GiniJS.controller.ViewController', {
 			this.consoles[e.name] = Ext.create('GiniJS.view.Console', {
 				title: e.name,
 				width: 300,
-				height: 300
+				height: 300,
+				prompt: "> "
 			});
 			this.consoles[e.name].show();
 		} else if (e.type === "msg"){
-			
+			var cons = this.consoles[e.name];
+			if (cons){
+				cons.append(e.msg, "");
+			}
 		}
 	}
 	

@@ -1,8 +1,9 @@
 Ext.require(['Ext.window.Window']);
 
+
 var handleKeyPress = function(field, e, eOpts){
 	if (e.getCharCode() === e.ENTER){
-		var cons = field.up('window');
+		var cons = this.up('window');
 		cons.processCommand(field.getValue());
 		field.setValue("");
 	}
@@ -27,11 +28,18 @@ Ext.define('GiniJS.view.Console', {
 		enableKeyEvents: true
 	}],
 	
-	processCommand : function(cmd){
+	append : function(msg, user){
 		var panel = this.down("panel");
-		panel.body.insertHtml("beforeEnd", this.title+": "+cmd+"<br/>");
+		user = user || this.title;
+		var prompt = this.prompt || ": ",
+			prefix = user + prompt; 
+		panel.body.insertHtml("beforeEnd", prefix + msg + "<br/>");
 		var d = panel.body.dom;
 		d.scrollTop = d.scrollHeight - d.offsetHeight;
+	},
+	
+	processCommand : function(cmd){
+		this.append(cmd);
 		this.fireEvent('command', this, cmd);
 	}
 	

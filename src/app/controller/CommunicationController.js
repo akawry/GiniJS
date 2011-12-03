@@ -22,21 +22,24 @@ Ext.define('GiniJS.controller.CommunicationController', {
 	
 	ongServerConnect : function(e){
 		this.socket = io.connect('http://localhost');
-		this.socket.on('gserver', this.ongServerMsg);
+		var me = this;
+		this.socket.on('process_msg', function(data){
+			me.onProcessMsg(data);
+		});
 		
 		this.application.fireEvent('console', {
 			type: 'open',
-			name: 'gServer'
+			name: 'gserver 1.0.1'
 		});
 	},
 	
-	ongServerMsg : function(data){
-		console.log("Got a gServer message!", data);
+	onProcessMsg : function(data){
+		console.log("Got a process message!", data);
 		
 		this.application.fireEvent('console', {
 			type: 'msg',
 			msg: data.msg,
-			name: 'gServer'
+			name: data.process
 		});
 	},
 	

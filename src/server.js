@@ -40,20 +40,14 @@ app.post('/command', function(req, res){
 			
 			if (!processes['gserver']){
 				console.log("Spawning gServer process...");
-				processes['gserver'] = spawn('gserver');
-				setTimeout(function(){
-					gserver_socket = net.createConnection(9000);
-					gserver_socket.on('connect', function(){
-						console.log("Conected to the gserver ... ");
-					});
-				}, 1000);
-				
+				processes['gserver 1.0.1'] = spawn('gserver');
 				res.json({}); // ok
 			} else {
 				res.json({
 					error: 'gServer is already running!'
 				});
 			}
+			
 			break;
 	}
 });
@@ -65,13 +59,8 @@ app.post('/console', function(req, res){
 	
 	if (child){
 		console.log("Sending command to child: ", cons, cmd);
-		if (cons === "gserver"){
-			console.log("sending via socket");
-			gserver_socket.write(cmd);
-		} else {
-			console.log("sending via stdin");
-			child.stdin.write(cmd);
-		}
+		console.log("sending via stdin");
+		child.stdin.write('exit\n\r');
 	}
 });
 
@@ -80,30 +69,17 @@ app.post('/console', function(req, res){
  */
 
 var processes = {};
-var gserver_socket = null;
 
 io.sockets.on('connection', function (socket) {
 	var process;
 	for (var p in processes){
 		process = processes[p];
 		process.stdout.on('data', function(data){
-			console.log("Emitting to client: ", data);
+			console.log("Emitting to client: ", data.toString());
 			socket.emit('process_msg', {
-				msg: data,
+				msg: data.toString(),
 				process: p
 			});
 		});
-		if (p === "gserver"){
-			setTimeout(function(){
-				console.log("Attaching listener to gserver socket for incoming data .... ");
-				gserver_socket.on('data', function(data){
-					console.log("Emitting to client (received via socket)", data);
-					socket.emit('process_msg', {
-						msg: data,
-						process: p
-					});
-				});
-			}, 1000);
-		}
 	}
 });
