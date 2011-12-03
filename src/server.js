@@ -19,6 +19,11 @@ app.get(/.*\.js/, function(req, res){
 	res.sendfile(__dirname + '/' + req.url);
 });
 
+app.get(/.*\.css/, function(req, res){
+	console.log("Serving static css file: %s", req.url);
+	res.sendfile(__dirname + '/' + req.url);
+});
+
 app.get(/.*\.(gif|png)/, function(req, res){
 	console.log("Serving static image file: %s", req.url);
 	res.sendfile(__dirname + '/' + req.url);
@@ -60,7 +65,8 @@ app.post('/console', function(req, res){
 	if (child){
 		console.log("Sending command to child: ", cons, cmd);
 		console.log("sending via stdin");
-		child.stdin.write('exit\n\r');
+		child.stdin.write('\n\rstatusall\n\r');
+		child.stdin.write('flush\n\r');
 	}
 });
 
@@ -80,6 +86,10 @@ io.sockets.on('connection', function (socket) {
 				msg: data.toString(),
 				process: p
 			});
+		});
+		
+		process.stderr.on('data', function(data){
+			console.log("Got some stderr: " + data);
 		});
 	}
 });
