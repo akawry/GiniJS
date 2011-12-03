@@ -11,10 +11,14 @@ Ext.define('GiniJS.view.CanvasView', {
 						console.log("Received drop: ", ddSource, e, data);
 						if (data.componentData){
 							me.fireEvent('insertnode', ddSource, e, data, me);
-						} else {
-							me.fireEvent('dragnode', ddSource, e, data, me);
-						}
+						} 
 						return true;
+					},
+					
+					notifyOver : function(ddSource, e, data){
+						if (!data.componentData)
+							me.fireEvent('dragnode', ddSource, e, data, me);
+						return this.dropAllowed;
 					}
 				});
 				

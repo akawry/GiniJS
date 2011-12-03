@@ -36,6 +36,11 @@ Ext.define('GiniJS.controller.ActionController', {
 	
 	onFileSelect : function(data){
 		console.log("Item selected from the 'File' menu...", data);
+		switch (data.text){
+			case "Save" :
+				// this.getController('GiniJS.controller.TopologyController').topologyToGSAV();
+				break;
+		}
 	},
 	
 	onProjectSelect : function(data){

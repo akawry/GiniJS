@@ -187,10 +187,14 @@ Ext.define('GiniJS.controller.TopologyController', {
 	
 	onDragNode : function(ddSource, e, data, canvas){
 		console.log("Drag event: ", ddSource, e, data, canvas);
-		var sprite = data.sprite;
-		sprite.x = Ext.fly(e.target).getX() - canvas.getEl().getX();
-		sprite.y = Ext.fly(e.target).getY() - canvas.getEl().getY();
-		this.redrawConnections(data.sprite);
+		var sprite = data.sprite,
+			x = Ext.fly(e.target).getX() - canvas.getEl().getX(),
+			y = Ext.fly(e.target).getY() - canvas.getEl().getY();
+		if (x > 0 && y > 0){
+			sprite.x = x;
+			sprite.y = y;
+			this.redrawConnections(data.sprite);
+		}
 	},
 	
 	onInsertRouter : function(data){
@@ -670,6 +674,15 @@ Ext.define('GiniJS.controller.TopologyController', {
 		this.application.fireEvent('refreshviews', {
 			selected: this.selected
 		}); 
+	},
+	
+	topologyToGSAV : function(){
+		var store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore');
+		var gsav = "";
+		store.each(function(node){
+			gsav += node.toString();
+		});
+		console.log(gsav);
 	}
 	
 });
