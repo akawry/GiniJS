@@ -23,6 +23,10 @@ Ext.define('GiniJS.controller.ViewController', {
 					this.consoles[console].hide();
 			}
 		}, this);
+		this.application.on('log', function(msg){
+			Ext.ComponentQuery.query('logview')[0].log(msg);
+		});
+		
 		this.consoles = {};
 		
 		this.control({

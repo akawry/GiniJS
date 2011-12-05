@@ -347,7 +347,7 @@ Ext.define('GiniJS.controller.TopologyController', {
 		var sprite = this.getUnderCursor(e);
 		if (!Ext.isEmpty(sprite)){
 			this.rightClicked = sprite.model
-			var menu = me.rightClickMenus[sprite.model.get('node').get('type')] || me.rightClickMenus["Default"];
+			var menu = this.rightClickMenus[sprite.model.get('node').get('type')] || this.rightClickMenus["Default"];
 			menu.showAt([e.getX(), e.getY()]);
 		}
 	},
@@ -439,10 +439,19 @@ Ext.define('GiniJS.controller.TopologyController', {
 	},
 	
 	onNodeDelete : function(node){
-		console.log("Deleting", node);
+		if (GiniJS.globals.topologyState === "running"){
+			this.application.fireEvent('log', "You cannot delete items from a running topology!");
+			return;
+		}
 		
 		// delete the sprite 
-		node.get('sprite').destroy();
+		var spr = node.get('sprite');
+		spr.destroy();
+		spr.label.destroy();
+		if (spr.selectionBox)
+			spr.selectionBox.destroy();
+		if (spr.powerButton)
+			spr.powerButton.destroy();
 		
 		// delete all the lines out of this node 
 		Ext.each(node.get('connection_sprites'), function(sprite){
@@ -779,20 +788,22 @@ Ext.define('GiniJS.controller.TopologyController', {
 			store.each(function(rec){
 				if (rec.type() === "UML"){
 					var con = rec.connections().first();
-					if (con.type() === "Subnet"){
-						me.generateIP(rec.interfaces().first(), con, rec);
-						me.generateMAC(rec.interfaces().first(), rec);
-						rec.interfaces().first().properties().each(function(prop){
-							prop.commit();
-						});
-					} else if (con.type() === "Switch") {
-						var subnet = con.otherConnection(rec, "Subnet");
-						if (subnet){
-							me.generateIP(rec.interfaces().first(), subnet, rec);
+					if (con){
+						if (con.type() === "Subnet"){
+							me.generateIP(rec.interfaces().first(), con, rec);
 							me.generateMAC(rec.interfaces().first(), rec);
 							rec.interfaces().first().properties().each(function(prop){
 								prop.commit();
 							});
+						} else if (con.type() === "Switch") {
+							var subnet = con.otherConnection(rec, "Subnet");
+							if (subnet){
+								me.generateIP(rec.interfaces().first(), subnet, rec);
+								me.generateMAC(rec.interfaces().first(), rec);
+								rec.interfaces().first().properties().each(function(prop){
+									prop.commit();
+								});
+							}
 						}
 					}
 				} else if (rec.type() === "Router"){
