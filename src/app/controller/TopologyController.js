@@ -24,6 +24,7 @@ Ext.define('GiniJS.controller.TopologyController', {
 		this.uml_freedoss = 0;
 		this.uml_androids = 0;
 		this.mobiles = 0;
+		this.wireless_access_points = 0;
 		
 		this.rightClickMenus = {};
 		this.rightClickMenus["UML"] = Ext.create('Ext.menu.Menu', {
@@ -140,10 +141,12 @@ Ext.define('GiniJS.controller.TopologyController', {
 				'click' : this.onNodeClick,
 				scope : this
 			},
-			model : node
+			model : node,
+			zIndex: 1
 		});
+		
 		node.set('sprite', sprite);
-		canvas.surface.add(sprite).show(true);	 		 
+		canvas.surface.add(sprite).show(true);
 			 
 		switch ( data.componentData.type ){
 			case "Router":
@@ -175,77 +178,108 @@ Ext.define('GiniJS.controller.TopologyController', {
 				break;
 		}
 		
-		Ext.tip.QuickTipManager.register({
-		    target: id,
-		    text: node.properties().findRecord('property', 'name').get('value'),
-		    dismissDelay: 4000
-		});		
-				
+		sprite.label = Ext.create('Ext.draw.Sprite', {
+			type: 'text',
+			text: node.property('name'),
+			y: y + data.componentData.height + 10,
+			x: x + data.componentData.width/2 - (node.property('name').length * 6)/2
+		});
+		canvas.surface.add(sprite.label).show(true);
+		
+		/**
+		 * TODO: The circle thingies to show if the device is on ?
+		 */
+		
 		store.add(node);			
 					
 	},
 	
 	onDragNode : function(ddSource, e, data, canvas){
-		console.log("Drag event: ", ddSource, e, data, canvas);
+		// mouse is moving too fast and gets off the image 
+		if (e.target.nodeName !== "image")
+			return;
+			
 		var sprite = data.sprite,
 			x = Ext.fly(e.target).getX() - canvas.getEl().getX(),
 			y = Ext.fly(e.target).getY() - canvas.getEl().getY();
-		if (x > 0 && y > 0){
-			sprite.x = x;
-			sprite.y = y;
-			this.redrawConnections(data.sprite);
+		sprite.x = x;
+		sprite.y = y;
+		sprite.label.setAttributes({
+			x: sprite.x + sprite.width/2 - (sprite.label.text.length * 6)/2,
+			y: sprite.y + sprite.height + 10
+		});
+		sprite.label.redraw();
+		if (this.dragStart === sprite && sprite.selectionBox){
+			sprite.selectionBox.destroy();
+			sprite.selectionBox = this.getSelectionBox(sprite);
+			this.canvas.surface.add(sprite.selectionBox).show(true);
 		}
+		this.redrawConnections(data.sprite);
 	},
 	
 	onInsertRouter : function(data){
 		console.log("Inserting router ... ", data);
-		data.setProperty('name', 'Router_' + (++this.routers));
+		data.setProperty('name', 'Router_' + (++this.routers), true);
 	},
 	
 	onInsertUML : function(data){
 		console.log("Inserting UML ... ", data);
-		data.setProperty('name', 'UML_' + (++this.umls));
+		data.setProperty('name', 'UML_' + (++this.umls), true);
 		
 		// Are these dynamically allocated ?
-		data.setProperty('filesystem', 'root_fs_beta2');
-		data.setProperty('filetype', 'cow');
+		data.setProperty('filesystem', 'root_fs_beta2', false);
+		data.setProperty('filetype', 'cow', false);
 		
 	},
 	
 	onInsertSwitch : function(data){
 		console.log("Inserting Switch ... ", data);
-		data.setProperty('name', 'Switch_' + (++this.switches));
-		data.setProperty('Hub mode', false); 
+		data.setProperty('name', 'Switch_' + (++this.switches), true);
+		data.setProperty('Hub mode', false, true); 
 	},
 	
 	onInsertSubnet : function(data){
 		console.log("Inserting Subnet ... ", data);
-		data.setProperty('name', 'Subnet_' + (++this.subnets));
+		data.setProperty('name', 'Subnet_' + (++this.subnets), true);
 	},
 	
 	onInsertFreeDOS : function(data){
 		console.log("Inserting Free DOS ... ", data);
-		data.setProperty('name', 'UML_FreeDOS_' + (++this.uml_freedoss));
+		data.setProperty('name', 'UML_FreeDOS_' + (++this.uml_freedoss), true);
 	},
 	
 	onInsertMobile : function(data){
 		console.log("Inserting Mobile ... ", data);
-		data.setProperty('name', 'Mobile_' + (++this.mobiles));
+		data.setProperty('name', 'Mobile_' + (++this.mobiles), true);
 	},
 	
 	onInsertUMLAndroid : function(data){
 		console.log("Inserting Android UML ... ", data);
-		data.setProperty('name', 'UML_Android_' + (++this.uml_androids));
+		data.setProperty('name', 'UML_Android_' + (++this.uml_androids), true);
 	},
 	
 	onInsertFirewall : function(data){
 		console.log("Inserting Firewall ... ", data);
-		data.setProperty('name', 'Firewall_' + (++this.firewalls));
+		data.setProperty('name', 'Firewall_' + (++this.firewalls), true);
 	},
 	
 	onInsertWirelessAccessPoint : function(data){
 		console.log("Inserting Wirless Access Point ... ", data);
-		data.setProperty('name', 'Wireless_access_point_' + (++this.wireless_access_points));
+		data.setProperty('name', 'Wireless_access_point_' + (++this.wireless_access_points), true);
+	},
+	
+	getSelectionBox : function(node){
+		return Ext.create('Ext.draw.Sprite', {
+			type: 'path',
+			path: new Ext.XTemplate('M {lx} {ty} L {rx} {ty} M {rx} {ty} L {rx} {by} M {rx} {by} L {lx} {by} M {lx} {by} L {lx} {ty}').apply({
+				lx: node.x,
+				rx: node.x + node.width,
+				ty: node.y,
+				by: node.y + node.height
+			}),
+			'stroke-width' : 1,
+			'stroke': "#CDCDCD"
+		});
 	},
 	
 	onNodeClick : function(node, e, eOpts){
@@ -255,18 +289,7 @@ Ext.define('GiniJS.controller.TopologyController', {
 				this.dragStart = node;
 				
 				// draw selection box 
-				node.selectionBox = Ext.create('Ext.draw.Sprite', {
-					type: 'path',
-					path: new Ext.XTemplate('M {lx} {ty} L {rx} {ty} M {rx} {ty} L {rx} {by} M {rx} {by} L {lx} {by} M {lx} {by} L {lx} {ty}').apply({
-						lx: node.x,
-						rx: node.x + node.width,
-						ty: node.y,
-						by: node.y + node.height
-					}),
-					'stroke-width' : 1,
-					'stroke': "#CDCDCD"
-				});				
-				
+				node.selectionBox = this.getSelectionBox(node);	
 				this.canvas.surface.add(node.selectionBox).show(true);				
 				
 			} else if (node != this.dragStart){
@@ -429,16 +452,10 @@ Ext.define('GiniJS.controller.TopologyController', {
 			'stroke-width' : 2,
 			'stroke' : '#000000'
 		});
-		
-		start.remove();
-		end.remove();
-		
+
 		start.model.get('connection_sprites').push(sprite);
 		end.model.get('connection_sprites').push(sprite);
-		
 		this.canvas.surface.add(sprite).show(true);
-		this.canvas.surface.add(start).show(true);
-		this.canvas.surface.add(end).show(true);
 	},
 	
 	redrawConnections : function(sprite){

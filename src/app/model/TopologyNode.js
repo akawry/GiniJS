@@ -25,10 +25,11 @@ Ext.define('GiniJS.model.TopologyNode', {
 		var prop = this.properties().findRecord('property', key);
 		return Ext.isEmpty(prop) ? prop : prop.get('value');
 	},
-	setProperty : function(key, value){ 
+	setProperty : function(key, value, editable){ 
 		this.properties().loadData([{
 			property: key,
-			value: value
+			value: value,
+			editable: editable || false
 		}], true);
 	},
 	connectionsWith : function(type){
@@ -45,7 +46,6 @@ Ext.define('GiniJS.model.TopologyNode', {
 			if (!con && rec !== node)
 				con = rec;
 		});
-		console.log(this.property('name')+"'s other connection than "+node.property('name')+" is "+con.property('name'));
 		return con;
 	},
 	emptyInterface : function(){

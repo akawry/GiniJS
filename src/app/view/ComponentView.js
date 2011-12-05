@@ -28,11 +28,10 @@ Ext.define('GiniJS.view.ComponentView', {
 		itemId: 'commonView',
 		listeners : {
 			'beforeexpand' : function(){
-				var store = Ext.data.StoreManager.lookup('GiniJS.store.ComponentStore');
-				store.clearFilter();
-				store.filter(function(rec){
-					return rec.get('common') === true;
-				});
+				filterComponentView('common', true);
+			},
+			'expand' : function(){
+				filterComponentView('common', true);
 			}
 		},
 		items: [Ext.create('Ext.view.View', {
@@ -51,11 +50,10 @@ Ext.define('GiniJS.view.ComponentView', {
 		itemId: 'hostView',
 		listeners : {
 			'beforeexpand' : function(){
-				var store = Ext.data.StoreManager.lookup('GiniJS.store.ComponentStore');
-				store.clearFilter();
-				store.filter(function(rec){
-					return rec.get('category') === "host";
-				});
+				filterComponentView('host');
+			},
+			'expand' : function(){
+				filterComponentView('host');
 			}
 		},
 		items: [Ext.create('Ext.view.View', {
@@ -74,11 +72,10 @@ Ext.define('GiniJS.view.ComponentView', {
 		itemId: 'netView',
 		listeners : {
 			'beforeexpand' : function(){
-				var store = Ext.data.StoreManager.lookup('GiniJS.store.ComponentStore');
-				store.clearFilter();
-				store.filter(function(rec){
-					return rec.get('category') === "net";
-				});
+				filterComponentView('net');
+			},
+			'expand' : function(){
+				filterComponentView('net');
 			}  
 		},
 		items: [Ext.create('Ext.view.View', {
@@ -93,6 +90,20 @@ Ext.define('GiniJS.view.ComponentView', {
 		})]
 	}]
 });
+
+function filterComponentView(type, common){
+	var store = Ext.data.StoreManager.lookup('GiniJS.store.ComponentStore');
+	store.clearFilter();
+	if (common === true){
+		store.filter(function(rec){
+			return rec.get('common') === true;
+		});
+	} else {
+		store.filter(function(rec){
+			return rec.get('category') === type;
+		});	
+	}
+};
 
 function initializeComponentDragZone(v) {
     v.dragZone = Ext.create('Ext.dd.DragZone', v.getEl(), {

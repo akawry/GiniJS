@@ -5,5 +5,7 @@ Ext.define('GiniJS.model.Property', {
 		name: 'property'
 	}, {
 		name: 'value'
+	}, {
+		name: 'editable', type: 'boolean'
 	}]
 });

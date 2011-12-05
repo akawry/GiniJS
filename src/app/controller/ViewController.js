@@ -3,11 +3,17 @@ Ext.define('GiniJS.controller.ViewController', {
 	id: 'GiniJS.controller.ViewController',
 	init : function(){
 		console.log("Initializing view controller...");
-		this.application.on('refreshviews', this.refreshViews, this);
-		
+		this.application.on('refreshviews', this.refreshViews, this);	
 		this.application.on('console', this.onConsole, this);
-		
 		this.consoles = {};
+		
+		this.control({
+			'component' : {
+				'log' : function(msg){
+					Ext.ComponentQuery.query('logview')[0].log(msg);
+				}
+			}
+		});
 	},
 	 
 	refreshViews : function(e){
@@ -18,7 +24,6 @@ Ext.define('GiniJS.controller.ViewController', {
 	},
 	
 	onConsole : function(e){
-		console.log(this);
 		if (e.type === "open"){
 			this.consoles[e.name] = Ext.create('GiniJS.view.Console', {
 				title: e.name,

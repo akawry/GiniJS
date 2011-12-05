@@ -11,14 +11,15 @@ Ext.define('GiniJS.model.Interface', {
 		var prop = this.properties().findRecord('property', key);
 		return Ext.isEmpty(prop) ? prop : prop.get('value');
 	},
-	setProperty : function(key, value){
+	setProperty : function(key, value, editable){
 		var prop = this.properties().findRecord('property', key);
 		if (prop){
 			prop.set('value', value);
 		} else {
 			this.properties().loadData([{
 				property: key,
-				value: value
+				value: value,
+				editable: editable || false
 			}], true);
 		}
 	}

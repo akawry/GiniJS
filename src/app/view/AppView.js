@@ -63,6 +63,11 @@ Ext.define('GiniJS.view.AppView', {
 		layout: 'fit',
 		items: [Ext.create('GiniJS.view.CanvasView')]
 	}],
-	
+	listeners : {
+		'afterrender' : function(){
+			console.log(this);
+			this.fireEvent('log', "Welcome to GiniJS");
+		}
+	}
 		
 });
