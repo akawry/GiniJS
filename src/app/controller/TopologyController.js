@@ -102,16 +102,7 @@ Ext.define('GiniJS.controller.TopologyController', {
 				scope : this
 			}
 		});
-	},
-	
-	getNodeByType : function(type){
-		var store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore');
-		var r = [];
-		store.each(function(rec){
-			if (rec.get('node').get('type') === type)
-				r.push(rec);
-		});
-		return r;
+
 	},
 	
 	onInsertNode : function(ddSource, e, data, canvas){
@@ -278,6 +269,8 @@ Ext.define('GiniJS.controller.TopologyController', {
 	onInsertSubnet : function(data){
 		console.log("Inserting Subnet ... ", data);
 		data.setProperty('name', 'Subnet_' + (++this.subnets), true);
+		data.setProperty('mask', '255.255.255.0');
+		data.setProperty('subnet', '192.168.' + this.subnets +'.0');
 	},
 	
 	onInsertFreeDOS : function(data){
@@ -343,11 +336,11 @@ Ext.define('GiniJS.controller.TopologyController', {
 				}
 				return false;
 			}
-			this.selected = node.model;
-			this.application.fireEvent('refreshviews', {
-				selected: this.selected
-			});
 		}
+		this.selected = node.model;
+		this.application.fireEvent('refreshviews', {
+			selected: this.selected
+		});
 	},
 	
 	onNodeRightClick : function(e){
@@ -680,8 +673,6 @@ Ext.define('GiniJS.controller.TopologyController', {
 						}
 					}
 								
-					
-					// TODO: These are allocated dynamically
 					iface.setProperty('mac', '');
 					iface.setProperty('ipv4', '');
 					
@@ -714,11 +705,10 @@ Ext.define('GiniJS.controller.TopologyController', {
 					} else if (endType === "UML"){
 						iface.setProperty('target', sm.property('name'));
 					}
-					
-					// TODO: These are allocated dynamically
-					iface.setProperty('mac', '');
+
 					iface.setProperty('ipv4', '');
-					
+					iface.setProperty('mac', '');
+
 					em.interfaces().loadRecords([iface], {
 						addRecords: true
 					});
@@ -783,7 +773,41 @@ Ext.define('GiniJS.controller.TopologyController', {
 			taskStore.remove(taskStore.getRange());
 			
 			var store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore');
+			
+			// generate IPs and MACs
 			var me = this;
+			store.each(function(rec){
+				if (rec.type() === "UML"){
+					var con = rec.connections().first();
+					if (con.type() === "Subnet"){
+						me.generateIP(rec.interfaces().first(), con, rec);
+						me.generateMAC(rec.interfaces().first(), rec);
+						rec.interfaces().first().properties().each(function(prop){
+							prop.commit();
+						});
+					} else if (con.type() === "Switch") {
+						var subnet = con.otherConnection(rec, "Subnet");
+						if (subnet){
+							me.generateIP(rec.interfaces().first(), subnet, rec);
+							me.generateMAC(rec.interfaces().first(), rec);
+							rec.interfaces().first().properties().each(function(prop){
+								prop.commit();
+							});
+						}
+					}
+				} else if (rec.type() === "Router"){
+					rec.interfaces().each(function(iface){
+						var target = getNodeByName(iface.property('target'));
+						var subnet = me.subnetBetween(rec, target);
+						me.generateIP(iface, subnet, rec);
+						me.generateMAC(iface, rec);
+						iface.properties().each(function(prop){
+							prop.commit();
+						});
+					});
+				}
+			});
+			
 			store.each(function(rec){
 				if (rec.type() === "Router" || rec.type() === "UML"){
 					taskStore.loadData([{
@@ -849,6 +873,68 @@ Ext.define('GiniJS.controller.TopologyController', {
 				rec.get('sprite').powerButton.redraw();	
 			}
 		});
+	},
+	
+	generateIP : function(iface, subnet, node){
+		console.log(iface, subnet, node);
+		var net = subnet.property('subnet').split(".")[2],
+			num = Number(node.property('name').split("_")[1]);
+		if (node.type() === "Router")
+			num += 126;
+		iface.setProperty('ipv4', '192.168.' + net + "." + (num + 1));
+	},
+	
+	generateMAC : function(iface, node){
+		var num = Number(node.property('name').split("_")[1]),
+			mac = "fe:fd:";
+		if (node.type() === "UML"){
+			mac += "02:00:00:" + (num < 16 ? "0" : "") + toHex(num);
+		} else if (node.type() === "Router"){
+			var idx = node.interfaces().indexOf(iface);
+			mac += "03:" + (num < 16 ? "0" : "" ) + toHex(num) + ":00:" + (idx < 16 ? "0" : "") + toHex(idx);
+		}
+		iface.setProperty('mac', mac);
+	},
+	
+	subnetBetween : function(a, b){
+		var subnet = null;
+		a.connections().each(function(con){
+			if (con.type() === "Subnet" && 
+				(con.connections().first() === a && con.connections().last() === b) ||
+				(con.connections().first() === b && con.connections().last() === a))
+				subnet = con;
+		});
+		return subnet;
 	}
 	
 });
+
+	
+/**
+ * FIGURE OUT HOW TO PUT THIS IN THE STORE
+ */
+var getNodeByName = function(name){
+	var store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore');
+	var node = null;
+	store.each(function(rec){
+		if (rec.property('name') === name)
+			node = rec;
+	});
+	return node;
+};
+
+	
+function toHex(d) {
+  var r = d % 16;
+  var result;
+  if (d-r == 0) 
+    result = toChar(r);
+  else 
+    result = toHex( (d-r)/16 ) + toChar(r);
+  return result;
+}
+ 
+function toChar(n) {
+  const alpha = "0123456789ABCDEF";
+  return alpha.charAt(n);
+}

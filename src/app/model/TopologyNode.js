@@ -40,10 +40,10 @@ Ext.define('GiniJS.model.TopologyNode', {
 		});
 		return cons;
 	},
-	otherConnection : function(node){
+	otherConnection : function(node, type){
 		var con = undefined;
 		this.connections().each(function(rec){
-			if (!con && rec !== node)
+			if (!con && rec !== node && (!type || rec.type() === type))
 				con = rec;
 		});
 		return con;

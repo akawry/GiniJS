@@ -10,6 +10,7 @@ Ext.define('GiniJS.view.TaskView', {
 		type: 'vbox',
 		align: 'stretch'
 	},
+	scroll: 'vertical',
 	items: [
 		Ext.create('Ext.grid.Panel', {
 			itemId: 'taskList',
