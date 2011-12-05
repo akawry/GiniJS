@@ -1,13 +1,4 @@
 Ext.define('GiniJS.view.AppView', {
-	constructor : function(config){
-		this.taskManager = Ext.create('GiniJS.view.TaskView', {
-			title: 'Task Manager',
-			minWidth: 100,
-			width: 300,
-		});		
-		
-		GiniJS.view.AppView.superclass.constructor.call(this, config);
-	},
 	extend: 'Ext.container.Viewport',	
 	plain: true, 
 	layout: {

@@ -7,6 +7,9 @@ Ext.define('GiniJS.controller.ActionController', {
 		this.control({
 			'menu' : {
 				'click' : this.onMenuSelect
+			},
+			'taskview > button' : {
+				'kill' : this.onKill
 			}
 		});
 	},
@@ -67,6 +70,33 @@ Ext.define('GiniJS.controller.ActionController', {
 					}
 				});
 				
+				/**
+				 * TODO: Divert calling this until we get the response from the server 
+				 */
+				
+				this.application.fireEvent('starttopology');
+				
+				break;
+				
+			case "Stop":
+				console.log("Sending stop command to server ... ");
+				
+				Ext.Ajax.request({
+					url: '/command',
+					params: {
+						type: 'stop'
+					},
+					success : function(res){
+						console.log(res);
+					}
+				});
+				
+				/**
+				 * TODO: Divert calling this until we get the response from the server 
+				 */
+				
+				this.application.fireEvent('stoptopology');
+				
 				break;
 				
 			case "Start Server":
@@ -100,5 +130,36 @@ Ext.define('GiniJS.controller.ActionController', {
 	
 	onHelpSelect : function(data){
 		console.log("Item selected from the 'Help' menu...", data);
+	},
+	
+	onKill : function(row){
+		console.log("Sending KILL command to server for pid: "+row.get('pid'));
+		
+		Ext.Ajax.request({
+			url: '/command',
+			params: {
+				type: 'kill',
+				pid: row.get('pid')
+			},
+			success : function(res){
+				console.log(res);
+			}
+		});
+		
+		/**
+		 * TODO: Defer this until we get the confirm from the server !!!
+		 */
+		
+		row.set('status', 'killed');
+		row.commit();
+		
+		var store = Ext.data.StoreManager.lookup('GiniJS.store.TaskStore');
+		var stop = true;
+		store.each(function(rec){
+			if (rec.get('status') !== 'killed')
+				stop = false;
+		});
+		if (stop)
+			this.application.fireEvent('stoptopology');
 	}
 });

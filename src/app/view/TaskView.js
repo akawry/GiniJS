@@ -5,8 +5,15 @@ Ext.require([
 
 Ext.define('GiniJS.view.TaskView', {
 	extend: 'Ext.window.Window',
+	alias: 'widget.taskview',
+	layout: {
+		type: 'vbox',
+		align: 'stretch'
+	},
 	items: [
 		Ext.create('Ext.grid.Panel', {
+			itemId: 'taskList',
+			selType: 'rowmodel',
 			store: 'GiniJS.store.TaskStore',
 			columns: [{
 				id: 'name',
@@ -33,6 +40,21 @@ Ext.define('GiniJS.view.TaskView', {
 					allowBlank: false
 				}
 			}]
+		})
+	],
+	dockedItems: [
+		Ext.create('Ext.button.Button', {
+			text: 'Kill',
+			handler : function(){
+				var list = this.up('window').getComponent('taskList'),
+					sel = list.getSelectionModel().selected,
+					store = Ext.data.StoreManager.lookup('GiniJS.store.TaskStore');
+				var me = this;
+				Ext.each(sel.items, function(row){
+					me.fireEvent('kill', row);
+				});
+			},
+			dock: 'bottom'
 		})
 	],
 	height: 300

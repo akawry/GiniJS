@@ -6,6 +6,12 @@ Ext.Loader.setConfig({
 	}
 });
 
+Ext.ns('GiniJS.globals');
+Ext.apply(GiniJS.globals, {
+	topologyState : "off",
+	gserverVersion: '1.0.1'
+});
+
 Ext.application({
 	name: 'GiniJS',
 	models: ['TopologyNode', 'Component', 'Property', 'Interface', 'Task'],

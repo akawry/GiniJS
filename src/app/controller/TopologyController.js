@@ -1,4 +1,8 @@
-
+var TOPOLOGY_COLORS = {
+	detached: '#FFB90F',
+	attached: '#55AE3A',
+	killed: '#CD3700'
+};
 
 Ext.define('GiniJS.controller.TopologyController', {
 	extend: 'Ext.app.Controller',
@@ -9,12 +13,22 @@ Ext.define('GiniJS.controller.TopologyController', {
 			'canvasview' : {
 				'insertnode' : this.onInsertNode,
 				'dragnode' : this.onDragNode,
-				'rightclick' : this.onNodeRightClick,			
+				'rightclick' : this.onNodeRightClick,
+				'doubleclick': this.onNodeDoubleClick			
 			}, 
 			'interfaceview > toolbar > button' : {
 				'click' : this.onInterfaceChange
+			},
+			'console' : {
+				'hide': this.onConsoleClose
+			},
+			'taskview > button' : {
+				'kill' : this.onKill
 			}
 		});
+		
+		this.application.on('starttopology', this.startTopology, this);
+		this.application.on('stoptopology', this.stopTopology, this);
 		
 		this.routers = 0;
 		this.umls = 0;
@@ -88,7 +102,6 @@ Ext.define('GiniJS.controller.TopologyController', {
 				scope : this
 			}
 		});
-		
 	},
 	
 	getNodeByType : function(type){
@@ -186,9 +199,24 @@ Ext.define('GiniJS.controller.TopologyController', {
 		});
 		canvas.surface.add(sprite.label).show(true);
 		
-		/**
-		 * TODO: The circle thingies to show if the device is on ?
-		 */
+		// draw the power button on the left 
+		if (data.componentData.type === "Router" || data.componentData.type === "UML"){
+			var xOff = data.componentData.type === "Router" ? 5 : 20,
+				yOff = data.componentData.type === "Router" ? 2 : 5;
+			sprite.powerButton = Ext.create('Ext.draw.Sprite',{
+				x: xOff + sprite.x,
+				y: yOff + sprite.y + sprite.height/2 - 5,
+				type: 'circle',
+				'stroke-width' : 0.7,
+				'stroke': "#000000",
+				radius: 5,
+				fill: TOPOLOGY_COLORS['detached'],
+				zIndex: 2,
+				xOff: xOff,
+				yOff: yOff
+			});
+			this.canvas.surface.add(sprite.powerButton);
+		}
 		
 		store.add(node);			
 					
@@ -213,6 +241,15 @@ Ext.define('GiniJS.controller.TopologyController', {
 			sprite.selectionBox.destroy();
 			sprite.selectionBox = this.getSelectionBox(sprite);
 			this.canvas.surface.add(sprite.selectionBox).show(true);
+		}
+		if (sprite.powerButton){
+			sprite.powerButton.setAttributes({
+				x: sprite.powerButton.xOff + sprite.x,
+				y: sprite.powerButton.yOff + sprite.y + sprite.height/2 - 5
+			});
+			if (GiniJS.globals.topologyState === "running"){
+				sprite.powerButton.redraw();
+			}
 		}
 		this.redrawConnections(data.sprite);
 	},
@@ -283,50 +320,83 @@ Ext.define('GiniJS.controller.TopologyController', {
 	},
 	
 	onNodeClick : function(node, e, eOpts){
-		// handle connections 
-		if (e.ctrlKey === true){
-			if (!this.dragStart){
-				this.dragStart = node;
+		if (GiniJS.globals.topologyState === "off"){
+			// handle connections 
+			if (e.ctrlKey === true){
+				if (!this.dragStart){
+					this.dragStart = node;
+					
+					// draw selection box 
+					node.selectionBox = this.getSelectionBox(node);	
+					this.canvas.surface.add(node.selectionBox).show(true);				
+					
+				} else if (node != this.dragStart){
 				
-				// draw selection box 
-				node.selectionBox = this.getSelectionBox(node);	
-				this.canvas.surface.add(node.selectionBox).show(true);				
-				
-			} else if (node != this.dragStart){
-			
-				// remove other selection box
-				this.dragStart.selectionBox.destroy();
-				this.onInsertConnection(this.dragStart, node);
-				this.dragStart = undefined;
-			} else {
-				this.dragStart.selectionBox.destroy();
-				// deselect connection 
-				this.dragStart = undefined;
+					// remove other selection box
+					this.dragStart.selectionBox.destroy();
+					this.onInsertConnection(this.dragStart, node);
+					this.dragStart = undefined;
+				} else {
+					this.dragStart.selectionBox.destroy();
+					// deselect connection 
+					this.dragStart = undefined;
+				}
+				return false;
 			}
-			return false;
+			this.selected = node.model;
+			this.application.fireEvent('refreshviews', {
+				selected: this.selected
+			});
 		}
-		this.selected = node.model;
-		this.application.fireEvent('refreshviews', {
-			selected: this.selected
-		});
 	},
 	
 	onNodeRightClick : function(e){
-		var sprite, x, y, me = this,
-			 store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore');
+		var sprite = this.getUnderCursor(e);
+		if (!Ext.isEmpty(sprite)){
+			this.rightClicked = sprite.model
+			var menu = me.rightClickMenus[sprite.model.get('node').get('type')] || me.rightClickMenus["Default"];
+			menu.showAt([e.getX(), e.getY()]);
+		}
+	},
+	
+	onNodeDoubleClick : function(e){
+		var sprite = this.getUnderCursor(e);
+		if (!Ext.isEmpty(sprite)){
+			var node = sprite.model;
+			if (GiniJS.globals.topologyState === "running" && (node.type() === "Router" || node.type() === "UML")){
+				this.application.fireEvent('console', {
+					type: 'open',
+					name: node.property('name')
+				});
+				
+				sprite.powerButton.setAttributes({
+					fill: TOPOLOGY_COLORS['attached']
+				});
+				sprite.powerButton.redraw();
+				
+				var store = Ext.data.StoreManager.lookup('GiniJS.store.TaskStore'),
+					task = store.findRecord('name', node.property('name'));
+				task.set('status', 'attached');
+				task.commit();
+			}
+		}
+	},
+	
+	getUnderCursor : function(e){
+		var sprite, x, y,
+			 store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore'),
+			 under = null,
+			 me = this;
 		store.each(function(rec){
 			sprite = rec.get('sprite');
 			x = e.getX() - me.canvas.getEl().getX();
 			y = e.getY() - me.canvas.getEl().getY();
 			if (x >= sprite.x && x <= sprite.x + sprite.width &&
 					y >= sprite.y && y <= sprite.y + sprite.height){
-					
-					me.rightClicked = sprite.model;
-					var menu = me.rightClickMenus[sprite.model.get('node').get('type')] || me.rightClickMenus["Default"];
-					menu.showAt([e.getX(), e.getY()]);
-					
+					under = sprite;
 			}
 		});
+		return under;
 	},
 	
 	onUMLRightClick : function(menu, item, e, eOpts){
@@ -545,6 +615,8 @@ Ext.define('GiniJS.controller.TopologyController', {
 						
 						if (sm.connectionsWith("Switch").length > 0){
 							errorMsg = "Subnet cannot have more than one Switch!";
+						} else if (em.connectionsWith("Subnet").length > 0){
+							errorMsg = "Switch cannot have more than one Subnet!";
 						} else {
 							success = true;
 						}
@@ -700,6 +772,83 @@ Ext.define('GiniJS.controller.TopologyController', {
 			gsav += node.toString();
 		});
 		console.log(gsav);
+	},
+	
+	/**
+	 * TODO: Do this properly.
+	 */
+	startTopology : function(){
+		if (GiniJS.globals.topologyState === "off"){
+			var taskStore = Ext.data.StoreManager.lookup('GiniJS.store.TaskStore');
+			taskStore.remove(taskStore.getRange());
+			
+			var store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore');
+			var me = this;
+			store.each(function(rec){
+				if (rec.type() === "Router" || rec.type() === "UML"){
+					taskStore.loadData([{
+						name: rec.property('name'),
+						pid: 0,
+						status: 'detached'
+					}], true);
+					rec.get('sprite').powerButton.setAttributes({
+						fill: TOPOLOGY_COLORS['detached']
+					});
+					rec.get('sprite').powerButton.show(true);
+				}
+				rec.get('sprite').dd.lock();
+			});
+			GiniJS.globals.topologyState = "running";
+		}
+	},
+	
+	stopTopology : function(){
+		if (GiniJS.globals.topologyState === "running"){
+			var taskStore = Ext.data.StoreManager.lookup('GiniJS.store.TaskStore');
+			taskStore.remove(taskStore.getRange());
+			
+			var store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore');
+			var me = this;
+			store.each(function(rec){
+				if (rec.type() === "Router" || rec.type() === "UML"){
+					rec.get('sprite').powerButton.hide(true);
+				}
+				rec.get('sprite').dd.unlock();
+			});
+			
+			GiniJS.globals.topologyState = "off";
+		}
+	},
+	
+	onConsoleClose : function(cons, eOpts){
+		var store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore'),
+			node = null;
+		store.each(function(rec){
+			if (rec.property('name') === cons.title)
+				node = rec;
+		});
+		
+		node.get('sprite').powerButton.setAttributes({
+			fill: TOPOLOGY_COLORS['detached']
+		});
+		node.get('sprite').powerButton.redraw();
+		
+		var taskStore = Ext.data.StoreManager.lookup('GiniJS.store.TaskStore'),
+			task = taskStore.findRecord('name', cons.title);
+		task.set('status', 'detached');
+		task.commit();
+	},
+	
+	onKill : function(row){
+		var store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore');
+		store.each(function(rec){
+			if (rec.property('name') === row.get('name')){
+				rec.get('sprite').powerButton.setAttributes({
+					fill: TOPOLOGY_COLORS['killed']
+				});
+				rec.get('sprite').powerButton.redraw();	
+			}
+		});
 	}
 	
 });

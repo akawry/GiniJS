@@ -3,8 +3,26 @@ Ext.define('GiniJS.controller.ViewController', {
 	id: 'GiniJS.controller.ViewController',
 	init : function(){
 		console.log("Initializing view controller...");
+		
+		this.taskManager = Ext.create('GiniJS.view.TaskView', {
+			title: 'Task Manager',
+			minWidth: 100,
+			width: 300,
+		});		
+		
+		
 		this.application.on('refreshviews', this.refreshViews, this);	
 		this.application.on('console', this.onConsole, this);
+		this.application.on('starttopology', function(){
+			this.taskManager.show();
+		}, this);
+		this.application.on('stoptopology', function(){
+			this.taskManager.hide();
+			for (var console in this.consoles){
+				if (console !== "gserver " + GiniJS.globals.gserverVersion)
+					this.consoles[console].hide();
+			}
+		}, this);
 		this.consoles = {};
 		
 		this.control({
@@ -12,6 +30,9 @@ Ext.define('GiniJS.controller.ViewController', {
 				'log' : function(msg){
 					Ext.ComponentQuery.query('logview')[0].log(msg);
 				}
+			},
+			'taskview > button': {
+				'kill': this.onKill
 			}
 		});
 	},
@@ -37,6 +58,13 @@ Ext.define('GiniJS.controller.ViewController', {
 			if (cons){
 				cons.append(e.msg, "");
 			}
+		}
+	},
+	
+	onKill : function(row){
+		var cons = this.consoles[row.get('name')];
+		if (cons){
+			cons.hide();
 		}
 	}
 	

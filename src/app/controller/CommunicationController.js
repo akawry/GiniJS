@@ -29,7 +29,7 @@ Ext.define('GiniJS.controller.CommunicationController', {
 		
 		this.application.fireEvent('console', {
 			type: 'open',
-			name: 'gserver 1.0.1'
+			name: 'gserver ' + GiniJS.globals.gserverVersion
 		});
 	},
 	

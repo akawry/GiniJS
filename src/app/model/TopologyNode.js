@@ -86,5 +86,9 @@ Ext.define('GiniJS.model.TopologyNode', {
 		});
 		
 		return str;
+	},
+	
+	type : function(){
+		return this.get('node').get('type');
 	}
 });

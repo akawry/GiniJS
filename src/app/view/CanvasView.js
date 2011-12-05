@@ -8,17 +8,21 @@ Ext.define('GiniJS.view.CanvasView', {
 				var me = this;
 				this.dropZone = new Ext.dd.DropTarget(this.getEl().dom, {
 					notifyDrop  : function(ddSource, e, data){
-						console.log("Received drop: ", ddSource, e, data);
-						if (data.componentData){
+						if (GiniJS.globals.topologyState === "off" && data.componentData){
 							me.fireEvent('insertnode', ddSource, e, data, me);
+							return true;
 						} 
-						return true;
+						return false;
 					},
 					
 					notifyOver : function(ddSource, e, data){
-						if (!data.componentData)
-							me.fireEvent('dragnode', ddSource, e, data, me);
-						return this.dropAllowed;
+						if (GiniJS.globals.topologyState == "off"){
+							if (!data.componentData){
+								me.fireEvent('dragnode', ddSource, e, data, me);
+							}
+							return this.dropAllowed;
+						}
+						return this.dropNotAllowed;
 					}
 				});
 				
@@ -27,6 +31,10 @@ Ext.define('GiniJS.view.CanvasView', {
 						e.preventDefault();
 						me.fireEvent('rightclick', e);	
 					}
+				});
+				
+				this.getEl().on('dblclick', function(e, el, eOpts){
+					me.fireEvent('doubleclick', e);
 				});
 			}
 		}
