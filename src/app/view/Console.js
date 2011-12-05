@@ -12,6 +12,7 @@ var handleKeyPress = function(field, e, eOpts){
 Ext.define('GiniJS.view.Console', {
 	extend: 'Ext.window.Window',
 	alias: 'widget.console',
+	closeAction: 'hide',
 	layout: {
 		type: 'vbox',
 		align: 'stretch'

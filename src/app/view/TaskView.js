@@ -6,6 +6,7 @@ Ext.require([
 Ext.define('GiniJS.view.TaskView', {
 	extend: 'Ext.window.Window',
 	alias: 'widget.taskview',
+	closeAction: 'hide',
 	layout: {
 		type: 'vbox',
 		align: 'stretch'

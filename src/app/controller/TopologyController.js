@@ -357,20 +357,23 @@ Ext.define('GiniJS.controller.TopologyController', {
 		if (!Ext.isEmpty(sprite)){
 			var node = sprite.model;
 			if (GiniJS.globals.topologyState === "running" && (node.type() === "Router" || node.type() === "UML")){
-				this.application.fireEvent('console', {
-					type: 'open',
-					name: node.property('name')
-				});
-				
-				sprite.powerButton.setAttributes({
-					fill: TOPOLOGY_COLORS['attached']
-				});
-				sprite.powerButton.redraw();
-				
 				var store = Ext.data.StoreManager.lookup('GiniJS.store.TaskStore'),
 					task = store.findRecord('name', node.property('name'));
-				task.set('status', 'attached');
-				task.commit();
+				if (task.get('status') === 'detached'){
+					this.application.fireEvent('console', {
+						type: 'open',
+						name: node.property('name')
+					});
+					
+					sprite.powerButton.setAttributes({
+						fill: TOPOLOGY_COLORS['attached']
+					});
+					sprite.powerButton.redraw();
+					
+					
+					task.set('status', 'attached');
+					task.commit();
+				}
 			}
 		}
 	},
