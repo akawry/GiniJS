@@ -40,12 +40,6 @@ Ext.define('GiniJS.view.Menu', {
 			type: 'edit',
 			items: [{
 				text: 'Copy'
-			}, {
-				text: 'Arrange'
-			}, {
-				text: 'Reset Layout'
-			}, {
-				text: 'Expand Scene'
 			}]
 		})
 	}, {
@@ -53,8 +47,6 @@ Ext.define('GiniJS.view.Menu', {
 		menu: Ext.create('Ext.menu.Menu', {
 			type: 'run',
 			items: [{
-				text: 'Compile'
-			}, {
 				text: 'Run'
 			}, {
 				text: 'Stop'
@@ -75,8 +67,6 @@ Ext.define('GiniJS.view.Menu', {
 		menu: Ext.create('Ext.menu.Menu', {
 			type: 'help',
 			items: [{
-				text: 'Tutorial'
-			}, {
 				text: 'FAQ'
 			}, {
 				text: 'About'

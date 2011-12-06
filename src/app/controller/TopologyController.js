@@ -655,6 +655,10 @@ Ext.define('GiniJS.controller.TopologyController', {
 						tid: sm.get('id')
 					});
 					iface.properties().filterOnLoad = false;
+					iface.properties().sorters.add(new Ext.util.Sorter({
+						property: 'property',
+						direction: 'ASC'
+					}));
 					
 					if (startType === "UML"){
 						if (endType === "Switch"){
@@ -704,6 +708,11 @@ Ext.define('GiniJS.controller.TopologyController', {
 						tid: sm.get('id')
 					});
 					iface.properties().filterOnLoad = false;
+					iface.properties().sorters.add(new Ext.util.Sorter({
+						property: 'property',
+						direction: 'ASC'
+					}));
+					
 					if (startType === "Subnet"){
 						if (sm.connections().getCount() > 1){
 							var other = sm.otherConnection(em);
@@ -812,12 +821,14 @@ Ext.define('GiniJS.controller.TopologyController', {
 				} else if (rec.type() === "Router"){
 					rec.interfaces().each(function(iface){
 						var target = getNodeByName(iface.property('target'));
-						var subnet = me.subnetBetween(rec, target);
-						me.generateIP(iface, subnet, rec);
-						me.generateMAC(iface, rec);
-						iface.properties().each(function(prop){
-							prop.commit();
-						});
+						if (target){
+							var subnet = me.subnetBetween(rec, target);
+							me.generateIP(iface, subnet, rec);
+							me.generateMAC(iface, rec);
+							iface.properties().each(function(prop){
+								prop.commit();
+							});
+						}
 					});
 				}
 			});
