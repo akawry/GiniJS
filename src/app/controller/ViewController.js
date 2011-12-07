@@ -8,26 +8,21 @@ Ext.define('GiniJS.controller.ViewController', {
 			title: 'Task Manager',
 			minWidth: 100,
 			width: 300,
-		});		
-		
-		
-		this.application.on('refreshviews', this.refreshViews, this);	
-		this.application.on('console', this.onConsole, this);
-		this.application.on('starttopology', function(){
-			this.taskManager.show();
-		}, this);
-		this.application.on('stoptopology', function(){
-			this.taskManager.hide();
-			for (var console in this.consoles){
-				if (console !== "gserver " + GiniJS.globals.gserverVersion)
-					this.consoles[console].hide();
-			}
-		}, this);
-		this.application.on('log', function(msg){
-			Ext.ComponentQuery.query('logview')[0].log(msg);
-		});
-		
+		});	
 		this.consoles = {};
+		
+		this.application.on({
+			'refreshviews' : this.refreshViews,
+			'console' : this.onConsole,
+			'starttopology' : this.onStartTopology,
+			'stoptopology' : this.onStopTopology,
+			'log' : this.onLog,
+			'login' : this.onLogin,
+			'open' : this.onOpen,
+			'saveas' : this.onSaveAs,
+			'options' : this.onOptions,
+			scope : this
+		});
 		
 		this.control({
 			'component' : {
@@ -70,6 +65,106 @@ Ext.define('GiniJS.controller.ViewController', {
 		if (cons){
 			cons.hide();
 		}
+	},
+	
+	onStartTopology : function(){
+		this.taskManager.show();
+	},
+	
+	onStopTopology : function(){
+		this.taskManager.hide();
+		for (var console in this.consoles){
+			if (console !== "gserver " + GiniJS.globals.gserverVersion)
+				this.consoles[console].hide();
+		}
+	},
+	
+	onLog : function(msg){
+		Ext.ComponentQuery.query('logview')[0].log(msg);
+	},
+	
+	onLogin : function(user){
+		Ext.ComponentQuery.query('loginview')[0].hide();
+		this.onLog('Logged in as '+user+'.');
+	},
+	
+	onOpen : function(){
+		var me = this;
+		if (!Ext.isDefined(this.openForm)){
+			this.openForm = Ext.create('Ext.form.Panel', {
+				alias: 'widget.fileopen',
+				title: 'Open',
+				floating: true,
+				closable: true,
+				frame: true,
+				width: 400,
+				closeAction: 'hide',
+				items: [{
+			        xtype: 'filefield',
+			        itemId: 'gsavfile',
+			        fieldLabel: 'File',
+			        labelWidth: 50,
+			        msgTarget: 'side',
+			        allowBlank: false,
+			        anchor: '100%',
+			        buttonText: 'Browse'
+			    }],
+				buttons: [{
+					text: 'Open',
+					handler : function(){
+						var panel = this.up('panel'),
+							file = panel.getComponent('gsavfile').getValue();
+						me.application.fireEvent('load', file);
+						panel.hide();
+					}
+				}]
+			});
+		}
+		
+		this.openForm.show();
+	},
+	
+	onSaveAs : function(callback){
+		var me = this;
+		if (!Ext.isDefined(this.saveForm)){
+			this.saveForm = Ext.create('Ext.form.Panel', {
+				alias: 'widget.filesave',
+				title: 'Save',
+				floating: true,
+				closable: true,
+				frame: true,
+				width: 400,
+				closeAction: 'hide',
+				items: [{
+			        xtype: 'filefield',
+			        itemId: 'gsavfile',
+			        fieldLabel: 'File',
+			        labelWidth: 50,
+			        msgTarget: 'side',
+			        allowBlank: false,
+			        anchor: '100%',
+			        buttonText: 'Browse'
+			    }],
+				buttons: [{
+					text: 'Save',
+					handler : function(){
+						var panel = this.up('panel');
+						GiniJS.globals.open = panel.getComponent('gsavfile').getValue();
+						me.application.fireEvent('save', callback);
+						panel.hide();
+					}
+				}]
+			});
+		}
+
+		this.saveForm.show();
+	},
+	
+	onOptions : function(){
+		if (!Ext.isDefined(this.optionsForm)){
+			this.optionsForm = Ext.create('GiniJS.view.OptionsView');
+		}
+		this.optionsForm.show();
 	}
 	
 });

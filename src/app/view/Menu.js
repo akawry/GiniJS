@@ -1,5 +1,6 @@
 Ext.define('GiniJS.view.Menu', {
 	extend: 'Ext.toolbar.Toolbar',
+	resizable: false,
 	items: [{
 		text: 'File',
 		menu: Ext.create('Ext.menu.Menu', {
@@ -16,10 +17,6 @@ Ext.define('GiniJS.view.Menu', {
 				text: 'Send File'
 			}, {
 				text: 'Export'
-			}, {
-				text: 'Close'
-			}, {
-				text: 'Quit'
 			}]
 		})
 	}, {
@@ -32,14 +29,6 @@ Ext.define('GiniJS.view.Menu', {
 				text: 'Open'
 			}, {
 				text: 'Close'
-			}]
-		})
-	}, {
-		text: 'Edit',
-		menu: Ext.create('Ext.menu.Menu', {
-			type: 'edit',
-			items: [{
-				text: 'Copy'
 			}]
 		})
 	}, {

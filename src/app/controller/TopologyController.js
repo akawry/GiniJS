@@ -26,9 +26,12 @@ Ext.define('GiniJS.controller.TopologyController', {
 				'kill' : this.onKill
 			}
 		});
-		
-		this.application.on('starttopology', this.startTopology, this);
-		this.application.on('stoptopology', this.stopTopology, this);
+
+		this.application.on({
+			'starttopology' : this.startTopology,
+			'stoptopology' : this.stopTopology,
+			scope : this
+		});
 		
 		this.routers = 0;
 		this.umls = 0;
@@ -102,7 +105,6 @@ Ext.define('GiniJS.controller.TopologyController', {
 				scope : this
 			}
 		});
-
 	},
 	
 	onInsertNode : function(ddSource, e, data, canvas){
@@ -210,7 +212,7 @@ Ext.define('GiniJS.controller.TopologyController', {
 		}
 		
 		store.add(node);			
-					
+		// store.sync();			
 	},
 	
 	onDragNode : function(ddSource, e, data, canvas){
@@ -313,6 +315,7 @@ Ext.define('GiniJS.controller.TopologyController', {
 	},
 	
 	onNodeClick : function(node, e, eOpts){
+		console.log(this);
 		if (GiniJS.globals.topologyState === "off"){
 			// handle connections 
 			if (e.ctrlKey === true){
@@ -584,7 +587,9 @@ Ext.define('GiniJS.controller.TopologyController', {
 					
 				} else if (endType === "Subnet"){
 					
-					if (sm.connectionsWith("Subnet").length > 0){
+					if (em.connections().getCount() > 1){
+						errorMsg = "Subnet cannot have more than two connections!"
+					} else if (sm.connectionsWith("Subnet").length > 0){
 						errorMsg = "Switch cannot have more than one Subnet!";
 					} else if (em.connectionsWith("Switch").length > 0){
 						errorMsg = "Subnet cannot have more than one Switch!";
@@ -754,6 +759,8 @@ Ext.define('GiniJS.controller.TopologyController', {
 				this.onDrawConnection(start, end);
 			}
 			
+			// Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore').sync();
+			
 		} else {
 			Ext.Msg.alert("Error", errorMsg || ("Cannot connect " + startType + " and " + endType));
 		}
@@ -782,7 +789,7 @@ Ext.define('GiniJS.controller.TopologyController', {
 		store.each(function(node){
 			gsav += node.toString();
 		});
-		console.log(gsav);
+		return gsav;
 	},
 	
 	/**
@@ -848,6 +855,7 @@ Ext.define('GiniJS.controller.TopologyController', {
 				rec.get('sprite').dd.lock();
 			});
 			GiniJS.globals.topologyState = "running";
+			// store.sync();
 		}
 	},
 	
@@ -930,8 +938,43 @@ Ext.define('GiniJS.controller.TopologyController', {
 				subnet = con;
 		});
 		return subnet;
-	}
+	},
 	
+	newTopology : function(){
+		var store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore');
+		if (store.getCount() > 0){
+			Ext.Msg.confirm('Save', 'Save before closing?', function(btn){
+				if (btn === "yes"){
+					this.application.fireEvent('save');
+				}
+				store.each(function(rec){
+					var sprite = rec.get('sprite');
+					sprite.destroy();
+					Ext.each(rec.get('connection_sprites'), function(con){
+						if (con.destroy)
+							con.destroy();
+					});
+					sprite.label.destroy();
+					if (sprite.selectionBox)
+						sprite.selectionBox.destroy();
+					if (sprite.powerButton)
+						sprite.powerButton.destroy();
+				});
+				
+				store.remove(store.getRange());
+				
+				this.routers = 0;
+				this.umls = 0;
+				this.switches = 0;
+				this.subnets = 0;
+				this.firewalls = 0;
+				this.uml_freedoss = 0;
+				this.uml_androids = 0;
+				this.mobiles = 0;
+				this.wireless_access_points = 0;
+			}, this);
+		}
+	}
 });
 
 	

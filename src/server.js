@@ -65,9 +65,15 @@ app.post('/console', function(req, res){
 	if (child){
 		console.log("Sending command to child: ", cons, cmd);
 		console.log("sending via stdin");
-		child.stdin.write('\n\rstatusall\n\r');
-		child.stdin.write('flush\n\r');
+		child.stdin.write(cmd);
 	}
+});
+
+app.post('/login', function(req, res){
+	var user = req.param('user'),
+		pass = req.param('password');
+	console.log("Login request for user: "+user);
+	res.json({}); //ok for now 
 });
 
 /**

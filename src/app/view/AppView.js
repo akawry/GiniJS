@@ -1,4 +1,9 @@
 Ext.define('GiniJS.view.AppView', {
+	constructor : function(config){
+		var loginView = Ext.create('GiniJS.view.LoginView');
+		loginView.show();
+		GiniJS.view.AppView.superclass.constructor.call(this, config);
+	},
 	extend: 'Ext.container.Viewport',	
 	plain: true, 
 	layout: {
@@ -9,7 +14,10 @@ Ext.define('GiniJS.view.AppView', {
 	},
 	items: [{
 		region: 'north',
-		items: [Ext.create('GiniJS.view.Menu')]
+		items: [Ext.create('GiniJS.view.Menu')],
+		layout: {
+			type: 'fit'
+		}
 	}, {
 		region: 'west',
 		layout: {

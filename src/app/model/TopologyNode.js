@@ -21,6 +21,12 @@ Ext.define('GiniJS.model.TopologyNode', {
 	}, {
 		model: 'GiniJS.model.Property', name: 'properties'
 	}],
+		
+	/*proxy: {
+		type: 'localstorage',
+		id: 'GiniJS.localstorage.Topology'
+	},*/
+	
 	property : function(key){
 		var prop = this.properties().findRecord('property', key);
 		return Ext.isEmpty(prop) ? prop : prop.get('value');

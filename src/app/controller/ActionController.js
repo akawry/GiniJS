@@ -10,126 +10,187 @@ Ext.define('GiniJS.controller.ActionController', {
 			},
 			'taskview > button' : {
 				'kill' : this.onKill
+			},
+			'loginview button' : {
+				'login' : this.onLogin
 			}
 		});
+		
+		this.application.on({
+			'save' : this.onSave,
+			'load' : this.onLoad,
+			scope : this
+		});
+		
+		this.menuCallbacks = {
+			'file' : {
+				'New' : this.onNew,
+				'Save' : this.onSave,
+				'Save As' : this.onSaveAs,
+				'Open' : this.onOpen,
+				'Send File' : this.onSendFile,
+				'Export' : this.onExport
+			},
+			
+			'project' : {
+				'New' : this.onNewProject,
+				'Open' : this.onOpenProject,
+				'Close' : this.onCloseProject
+			},
+			
+			'run' : {
+				'Run' : this.onRun,
+				'Stop' : this.onStop,
+				'Start Server' : this.onStartServer
+			},
+			
+			'config' : {
+				'Options' : this.onOptions
+			},
+			
+			'help' : {
+				'FAQ' : this.onFAQ,
+				'About' : this.onAbout
+			}
+		};
 	},
 
 	onMenuSelect : function(menu, item, e, eOpts){
-		switch(menu.type){
-			case "file":
-				this.onFileSelect(item);
-				break;
-			case "project":
-				this.onProjectSelect(item);
-				break;
-			case "edit":
-				this.onEditSelect(item);
-				break;
-			case "run":
-				this.onRunSelect(item);
-				break;
-			case "config":
-				this.onConfigSelect(item);
-				break;
-			case "help":
-				this.onHelpSelect(item);
-				break;
-		}
+		console.log(item);
+		this.menuCallbacks[menu.type][item.text].call(this);
 	},	
 	
-	onFileSelect : function(data){
-		console.log("Item selected from the 'File' menu...", data);
-		switch (data.text){
-			case "Save" :
-				// this.getController('GiniJS.controller.TopologyController').topologyToGSAV();
-				break;
+	onNew : function(){
+		this.getController('TopologyController').newTopology();
+	},
+	
+	onSave : function(callback){
+		if (!GiniJS.globals.open){
+			console.log("saving as ... ");
+			this.application.fireEvent('saveas', callback);
+		} else {
+			console.log("saving to: " + GiniJS.globals.open);
+			var gsav = this.getController('TopologyController').topologyToGSAV();
+			this.application.fireEvent('log', 'Saved topology to '+ GiniJS.globals.open);
+			console.log(typeof callback, callback);
+			if (typeof callback === "function")
+				callback();
 		}
 	},
 	
-	onProjectSelect : function(data){
-		console.log("Item selected from the 'Project' menu...", data);
+	onSaveAs : function(){
+		this.application.fireEvent('saveas');
 	},
 	
-	onEditSelect : function(data){
-		console.log("Item selected from the 'Edit' menu...", data);
+	onOpen : function(){
+		var me = this;
+		var callback = function(){
+			console.log("INITIATING OPEN");
+			me.application.fireEvent('open');
+		};
+		
+		Ext.Msg.confirm('Confirm', 'Save before closing?', function(btn){
+			if (btn === "yes"){
+				this.onSave(callback);
+			} else {
+				callback();
+			}
+		}, this);
 	},
 	
-	onRunSelect : function(data){
-		console.log("Item selected from the 'Run' menu...", data);
-		switch (data.text){
-			case "Run":
-				console.log("Sending run command to server ... ");
-				
-				Ext.Ajax.request({
-					url: '/command',
-					params: {
-						type: 'run'
-					},
-					success : function(res){
-						console.log(res);
-					}
-				});
-				
-				/**
-				 * TODO: Divert calling this until we get the response from the server 
-				 */
-				
-				this.application.fireEvent('starttopology');
-				
-				break;
-				
-			case "Stop":
-				console.log("Sending stop command to server ... ");
-				
-				Ext.Ajax.request({
-					url: '/command',
-					params: {
-						type: 'stop'
-					},
-					success : function(res){
-						console.log(res);
-					}
-				});
-				
-				/**
-				 * TODO: Divert calling this until we get the response from the server 
-				 */
-				
-				this.application.fireEvent('stoptopology');
-				
-				break;
-				
-			case "Start Server":
-				console.log("Sending server start command to server ... ");
-				
-				Ext.Ajax.request({
-					url: '/command',
-					jsonData : {
-						type: 'start_server'
-					},
-					success : function(res){
-						var obj = Ext.decode(res.responseText);
-						console.log("Got a response!", obj);
-						if (!obj.error){
-							console.log("Should open the socket.io connection now ... ");
-							this.application.fireEvent('gserver', {
-								type: 'do_connect'
-							});
-						}
-					},
-					scope : this
-				});
-				
-				break;
-		}
+	onSendFile : function(){
+		
 	},
 	
-	onConfigSelect : function(data){
-		console.log("Item selected from the 'Config' menu...", data);
+	onExport : function(){
+		
 	},
 	
-	onHelpSelect : function(data){
-		console.log("Item selected from the 'Help' menu...", data);
+	onNewProject : function(){
+		
+	},
+	
+	onOpenProject : function(){
+		
+	},
+	
+	onCloseProject : function(){
+		
+	},
+	
+	onRun : function(){
+		console.log("Sending run command to server ... ");
+		
+		Ext.Ajax.request({
+			url: '/command',
+			params: {
+				type: 'run'
+			},
+			success : function(res){
+				console.log(res);
+			}
+		});
+		
+		/**
+		 * TODO: Divert calling this until we get the response from the server 
+		 */
+		
+		this.application.fireEvent('starttopology');
+	},
+	
+	onStop : function(){
+		console.log("Sending stop command to server ... ");
+		
+		Ext.Ajax.request({
+			url: '/command',
+			params: {
+				type: 'stop'
+			},
+			success : function(res){
+				console.log(res);
+			}
+		});
+		
+		/**
+		 * TODO: Divert calling this until we get the response from the server 
+		 */
+		
+		this.application.fireEvent('stoptopology');
+	},
+	
+	onStartServer : function(){
+		console.log("Sending server start command to server ... ");
+		
+		Ext.Ajax.request({
+			url: '/command',
+			jsonData : {
+				type: 'start_server'
+			},
+			success : function(res){
+				var obj = Ext.decode(res.responseText);
+				console.log("Got a response!", obj);
+				if (!obj.error){
+					console.log("Should open the socket.io connection now ... ");
+					this.application.fireEvent('gserver', {
+						type: 'do_connect'
+					});
+				}
+			},
+			scope : this
+		});
+
+	},
+	
+	onOptions : function(){
+		this.application.fireEvent('options');
+	},
+	
+	onFAQ : function(){
+		window.open('http://cgi.cs.mcgill.ca/~anrl/gini/faq.html');
+	},
+	
+	onAbout : function(){
+		Ext.Msg.alert("About GiniJS", "GiniJS was written by Alexander Kawrykow under the supervision of Muthucumaru Maheswaran");
 	},
 	
 	onKill : function(row){
@@ -161,5 +222,30 @@ Ext.define('GiniJS.controller.ActionController', {
 		});
 		if (stop)
 			this.application.fireEvent('stoptopology');
+	},
+	
+	onLogin : function(user, pass){
+		Ext.Ajax.request({
+			url: '/login',
+			params: {
+				user: user,
+				password: pass
+			},
+			success: function(res){
+				res = Ext.decode(res.responseText);
+				if (res.error){
+					Ext.Msg.alert("Error", res.err);
+				} else {
+					this.application.fireEvent('login', user);
+					GiniJS.globals.user = user;
+				}
+			},
+			scope : this
+		});
+	},
+	
+	onLoad : function(res){
+		this.application.fireEvent('log', 'Opening ' + res);
+		GiniJS.globals.open = res;
 	}
 });
