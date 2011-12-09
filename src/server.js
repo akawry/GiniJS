@@ -3,6 +3,7 @@ var app = express.createServer();
 var io = require('socket.io').listen(app);
 var spawn = require('child_process').spawn;
 var net = require('net');
+var fs = require('fs');
 
 /**
  * Serve static files 
@@ -55,6 +56,23 @@ app.post('/command', function(req, res){
 			
 			break;
 	}
+});
+
+app.post('/download', function(req, res){
+	var fname = req.param('filename'),
+		gsav = req.param('gsav');
+	console.log("Download request: "+fname);
+	fs.open(fname, 'w', 0666, function(err, fd){
+		fs.writeSync(fd, gsav, 0);
+		res.json({}) // ok
+	});
+});
+
+app.get('/download', function(req, res){
+	var fname = req.param('filename');
+	fs.open(fname, 'r', 0666, function(err, fd){
+		res.download(fname, fname);
+	});
 });
 
 app.post('/console', function(req, res){

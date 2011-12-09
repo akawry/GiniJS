@@ -136,14 +136,13 @@ Ext.define('GiniJS.controller.ViewController', {
 				width: 400,
 				closeAction: 'hide',
 				items: [{
-			        xtype: 'filefield',
+			        xtype: 'textfield',
 			        itemId: 'gsavfile',
 			        fieldLabel: 'File',
 			        labelWidth: 50,
 			        msgTarget: 'side',
 			        allowBlank: false,
-			        anchor: '100%',
-			        buttonText: 'Browse'
+			        anchor: '100%'
 			    }],
 				buttons: [{
 					text: 'Save',

@@ -65,14 +65,24 @@ Ext.define('GiniJS.controller.ActionController', {
 	},
 	
 	onSave : function(callback){
-		if (!GiniJS.globals.open){
+		if (!Ext.isDefined(GiniJS.globals.open)){
 			console.log("saving as ... ");
+			if (typeof callback !== "function")
+				callback = this.onSav;
 			this.application.fireEvent('saveas', callback);
 		} else {
-			console.log("saving to: " + GiniJS.globals.open);
 			var gsav = this.getController('TopologyController').topologyToGSAV();
+			Ext.Ajax.request({
+				url: '/download',
+				params: {
+					filename: GiniJS.globals.open,
+					gsav: gsav
+				},
+				success : function(){
+					window.location = 'download?filename='+GiniJS.globals.open;
+				}
+			});
 			this.application.fireEvent('log', 'Saved topology to '+ GiniJS.globals.open);
-			console.log(typeof callback, callback);
 			if (typeof callback === "function")
 				callback();
 		}

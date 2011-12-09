@@ -160,4 +160,5 @@ Ext.define('GiniJS.view.OptionsView', {
 			this.fireEvent('updateoptions', vals);
 		}
 	}]
-});
+});js 
+
