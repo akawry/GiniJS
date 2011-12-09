@@ -61,14 +61,25 @@ Ext.define('GiniJS.controller.ActionController', {
 	},	
 	
 	onNew : function(){
-		this.getController('TopologyController').newTopology();
+		// preserve scope
+		var me = this;
+		var callback = function(){
+			me.getController('TopologyController').newTopology();
+		}
+		Ext.Msg.confirm('Confirm', 'Save before closing?', function(btn){
+			if (btn === "yes"){
+				this.onSave(callback);
+			} else {
+				callback();
+			}
+		}, this);
 	},
 	
 	onSave : function(callback){
 		if (!Ext.isDefined(GiniJS.globals.open)){
 			console.log("saving as ... ");
 			if (typeof callback !== "function")
-				callback = this.onSav;
+				callback = this.onSave;
 			this.application.fireEvent('saveas', callback);
 		} else {
 			var gsav = this.getController('TopologyController').topologyToGSAV();

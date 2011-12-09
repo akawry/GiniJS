@@ -966,45 +966,31 @@ Ext.define('GiniJS.controller.TopologyController', {
 	
 	newTopology : function(){
 		var store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore');
-		if (store.getCount() > 0){
-			Ext.Msg.confirm('Save', 'Save before closing?', function(btn){
-				var me = this;
-				var callback = function(){
-					store.each(function(rec){
-						var sprite = rec.get('sprite');
-						sprite.destroy();
-						Ext.each(rec.get('connection_sprites'), function(con){
-							if (con.destroy)
-								con.destroy();
-						});
-						sprite.label.destroy();
-						if (sprite.selectionBox)
-							sprite.selectionBox.destroy();
-						if (sprite.powerButton)
-							sprite.powerButton.destroy();
-					});
-					
-					store.remove(store.getRange());
-					
-					me.routers = 0;
-					me.umls = 0;
-					me.switches = 0;
-					me.subnets = 0;
-					me.firewalls = 0;
-					me.uml_freedoss = 0;
-					me.uml_androids = 0;
-					me.mobiles = 0;
-					me.wireless_access_points = 0;
-				};
-				
-				if (btn === "yes"){
-					this.application.fireEvent('save', callback);
-				} else {
-					callback.call(this);
-				}
-				
-			}, this);
-		}
+		store.each(function(rec){
+			var sprite = rec.get('sprite');
+			sprite.destroy();
+			Ext.each(rec.get('connection_sprites'), function(con){
+				if (con.destroy)
+					con.destroy();
+			});
+			sprite.label.destroy();
+			if (sprite.selectionBox)
+				sprite.selectionBox.destroy();
+			if (sprite.powerButton)
+				sprite.powerButton.destroy();
+		});
+		
+		store.remove(store.getRange());
+		
+		this.routers = 0;
+		this.umls = 0;
+		this.switches = 0;
+		this.subnets = 0;
+		this.firewalls = 0;
+		this.uml_freedoss = 0;
+		this.uml_androids = 0;
+		this.mobiles = 0;
+		this.wireless_access_points = 0;
 	}
 });
 	
