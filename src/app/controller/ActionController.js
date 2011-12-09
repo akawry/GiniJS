@@ -78,8 +78,13 @@ Ext.define('GiniJS.controller.ActionController', {
 	onSave : function(callback){
 		if (!Ext.isDefined(GiniJS.globals.open)){
 			console.log("saving as ... ");
-			if (typeof callback !== "function")
-				callback = this.onSave;
+			if (typeof callback !== "function"){
+				// preserve scope 
+				var me = this,
+					callback = function(){
+						me.onSave()
+					};
+			}
 			this.application.fireEvent('saveas', callback);
 		} else {
 			var gsav = this.getController('TopologyController').topologyToGSAV();
@@ -268,5 +273,9 @@ Ext.define('GiniJS.controller.ActionController', {
 	onLoad : function(res){
 		this.application.fireEvent('log', 'Opening ' + res);
 		GiniJS.globals.open = res;
+		
+		/**
+		 * TODO: get the contents of the file and then invoke the openTopology method on the TopologyController 
+		 */
 	}
 });

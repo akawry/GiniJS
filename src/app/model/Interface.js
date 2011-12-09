@@ -1,6 +1,6 @@
 Ext.define('GiniJS.model.Interface', {
 	extend: 'Ext.data.Model',
-	field: ['id', 'tid'],
+	field: ['id', 'tid', 'subnet'],
 	belongsTo: [{
 		model: 'GiniJS.model.TopologyNode', foreignKey: 'tid'
 	}],
@@ -25,7 +25,8 @@ Ext.define('GiniJS.model.Interface', {
 	},
 	toString : function(){
 		var str = this.property('target')+"\n";
-	
+		str += "\tsubnet:" + this.get('subnet')+"\n";
+		
 		/**
 		 * TODO: write the Routing information
 		 * (for the .gsav files )

@@ -938,6 +938,8 @@ Ext.define('GiniJS.controller.TopologyController', {
 			num = Number(node.property('name').split("_")[1]);
 		if (node.type() === "Router")
 			num += 126;
+		iface.set('subnet', subnet.property('subnet'));
+		console.log(iface.get('subnet'), subnet.property('subnet'));
 		iface.setProperty('ipv4', '192.168.' + net + "." + (num + 1));
 	},
 	
