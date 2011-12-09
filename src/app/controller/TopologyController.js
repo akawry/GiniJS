@@ -785,16 +785,41 @@ Ext.define('GiniJS.controller.TopologyController', {
 	
 	topologyToGSAV : function(){
 		var store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore');
-		var gsav = "";
+			gsav = "",
+			i = 0, max = store.getCount();
 		store.each(function(node){
-			gsav += node.toString();
+			gsav += node.toString()+(i < max - 1 ? "\n" : "");
+			i++;
+		});
+		
+		// write edges 
+		gsav += "\n";
+		var pairs = {},
+			pair = "",
+			name,
+			con_name;
+		/**
+		 * TODO: does it matter which way the connection is written? ie, 
+		 * does (UML_1,Switch_1) == (Switch_1,UML_1) ?
+		 * Right now I'm just writing one of the two, but I'm arbitrarily 
+		 * writing one of them. 
+		 */
+		store.each(function(node){
+			name = node.property('name');
+			node.connections().each(function(con){
+				con_name = con.property('name');
+				if (!pairs[con_name] || !pairs[con_name][name]){
+					pair = 'edge:('+name+','+con_name+')\n\tname:SomeEdge\n';
+					if (!pairs[name])
+						pairs[name] = {};
+					pairs[name][con_name] = pair;
+					gsav += pair;
+				}
+			});
 		});
 		return gsav;
 	},
-	
-	/**
-	 * TODO: Do this properly.
-	 */
+
 	startTopology : function(){
 		if (GiniJS.globals.topologyState === "off"){
 			var taskStore = Ext.data.StoreManager.lookup('GiniJS.store.TaskStore');
@@ -827,7 +852,7 @@ Ext.define('GiniJS.controller.TopologyController', {
 					}
 				} else if (rec.type() === "Router"){
 					rec.interfaces().each(function(iface){
-						var target = getNodeByName(iface.property('target'));
+						var target = store.getNodeByName(iface.property('target'));
 						if (target){
 							var subnet = me.subnetBetween(rec, target);
 							me.generateIP(iface, subnet, rec);
@@ -855,7 +880,6 @@ Ext.define('GiniJS.controller.TopologyController', {
 				rec.get('sprite').dd.lock();
 			});
 			GiniJS.globals.topologyState = "running";
-			// store.sync();
 		}
 	},
 	
@@ -944,53 +968,45 @@ Ext.define('GiniJS.controller.TopologyController', {
 		var store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore');
 		if (store.getCount() > 0){
 			Ext.Msg.confirm('Save', 'Save before closing?', function(btn){
-				if (btn === "yes"){
-					this.application.fireEvent('save');
-				}
-				store.each(function(rec){
-					var sprite = rec.get('sprite');
-					sprite.destroy();
-					Ext.each(rec.get('connection_sprites'), function(con){
-						if (con.destroy)
-							con.destroy();
+				var me = this;
+				var callback = function(){
+					store.each(function(rec){
+						var sprite = rec.get('sprite');
+						sprite.destroy();
+						Ext.each(rec.get('connection_sprites'), function(con){
+							if (con.destroy)
+								con.destroy();
+						});
+						sprite.label.destroy();
+						if (sprite.selectionBox)
+							sprite.selectionBox.destroy();
+						if (sprite.powerButton)
+							sprite.powerButton.destroy();
 					});
-					sprite.label.destroy();
-					if (sprite.selectionBox)
-						sprite.selectionBox.destroy();
-					if (sprite.powerButton)
-						sprite.powerButton.destroy();
-				});
+					
+					store.remove(store.getRange());
+					
+					me.routers = 0;
+					me.umls = 0;
+					me.switches = 0;
+					me.subnets = 0;
+					me.firewalls = 0;
+					me.uml_freedoss = 0;
+					me.uml_androids = 0;
+					me.mobiles = 0;
+					me.wireless_access_points = 0;
+				};
 				
-				store.remove(store.getRange());
+				if (btn === "yes"){
+					this.application.fireEvent('save', callback);
+				} else {
+					callback.call(this);
+				}
 				
-				this.routers = 0;
-				this.umls = 0;
-				this.switches = 0;
-				this.subnets = 0;
-				this.firewalls = 0;
-				this.uml_freedoss = 0;
-				this.uml_androids = 0;
-				this.mobiles = 0;
-				this.wireless_access_points = 0;
 			}, this);
 		}
 	}
 });
-
-	
-/**
- * FIGURE OUT HOW TO PUT THIS IN THE STORE
- */
-var getNodeByName = function(name){
-	var store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore');
-	var node = null;
-	store.each(function(rec){
-		if (rec.property('name') === name)
-			node = rec;
-	});
-	return node;
-};
-
 	
 function toHex(d) {
   var r = d % 16;

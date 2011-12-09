@@ -75,20 +75,29 @@ Ext.define('GiniJS.model.TopologyNode', {
 	 * TODO: Complete this so that the .gsav file can be generated
 	 */
 	toString : function(){
-		console.log(this.store);
-		var str = this.property('name')+":";
+		var str = this.property('name')+":",
+			i = 0, max = this.properties().getCount();
+		
 		str += "("+this.get('sprite').x+","+this.get('sprite').y+")\n";
+		
 		this.properties().each(function(prop){
-			str += "\t" + prop.get('property')+":"+prop.get('value')+"\n";
+			str += "\t" + prop.get('property')+":"+prop.get('value')+(i < max - 1 ? "\n" : "");
+			i++;
 		});
-		var me = this;
+		
+		if (this.interfaces().getCount() > 0)
+			str += "\n";
+		
+		var me = this,
+			toks = [];
 		this.interfaces().each(function(iface){
-			var node = me.store.getNodeByName(iface.property('target')),
-				nodeStr = node.toString(),
-				toks = nodeStr.split("\n");
-			Ext.each(toks, function(tok){
-				str += "\t\t" + tok;
-			});
+			str += "\t\tinterface:";
+			toks = iface.toString().split("\n");
+			// first token is name 
+			str += toks[0] + "\n";
+			for (i = 1; i < toks.length; i++){
+				str += "\t\t" + toks[i] + (i < toks.length - 1 ? "\n" : "");
+			};
 		});
 		
 		return str;

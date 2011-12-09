@@ -22,5 +22,22 @@ Ext.define('GiniJS.model.Interface', {
 				editable: editable || false
 			}], true);
 		}
+	},
+	toString : function(){
+		var str = this.property('target')+"\n";
+	
+		/**
+		 * TODO: write the Routing information
+		 * (for the .gsav files )
+		 */
+		
+		var i = 0, max = this.properties().getCount(); 
+		this.properties().each(function(prop){
+			if (prop.get('property') !== "target")
+				str += "\t"+prop.get('property')+":"+prop.get('value')+((i < max - 1) ? "\n" : "");
+				i++;
+		});
+		
+		return str; 
 	}
 });
