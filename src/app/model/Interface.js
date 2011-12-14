@@ -40,5 +40,19 @@ Ext.define('GiniJS.model.Interface', {
 		});
 		
 		return str; 
+	},
+	toJSON : function(){
+		var obj = {};
+		obj.subnet = this.get('subnet');
+		
+		/**
+		 * TODO: routing information 
+		 */
+		obj.properties = [];
+		this.properties().each(function(prop){
+			obj.properties.push(prop.toJSON());
+		});
+		
+		return obj;
 	}
 });

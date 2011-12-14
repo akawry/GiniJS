@@ -14,7 +14,10 @@ Ext.define('GiniJS.controller.TopologyController', {
 				'insertnode' : this.onInsertNode,
 				'dragnode' : this.onDragNode,
 				'rightclick' : this.onNodeRightClick,
-				'doubleclick': this.onNodeDoubleClick			
+				'doubleclick': this.onNodeDoubleClick,
+				'afterrender' : function(canvas){
+					this.canvas = canvas
+				}
 			}, 
 			'interfaceview > toolbar > button' : {
 				'click' : this.onInterfaceChange
@@ -110,20 +113,16 @@ Ext.define('GiniJS.controller.TopologyController', {
 	onInsertNode : function(ddSource, e, data, canvas){
 		console.log("Inserting node ... ", ddSource, e, data, canvas);
 
-		if (!this.canvas){
-			this.canvas = canvas;
-		}
-		
 		var store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore'),
-			 comps = Ext.data.StoreManager.lookup('GiniJS.store.ComponentStore'),
-			 mdl = comps.findRecord('type', data.componentData.type);			
+			 comps = Ext.data.StoreManager.lookup('GiniJS.store.ComponentStore');		
 		
 		var x = e.getX() - canvas.getEl().getX(),
 			 y = e.getY() - canvas.getEl().getY(),
 			 id = Ext.id();
 				
 		var node = Ext.create('GiniJS.model.TopologyNode', {
-			node: mdl,
+			id: Ext.id(),
+			type: data.componentData.type,
 			connection_sprites: []
 		});
 		
@@ -350,7 +349,7 @@ Ext.define('GiniJS.controller.TopologyController', {
 		var sprite = this.getUnderCursor(e);
 		if (!Ext.isEmpty(sprite)){
 			this.rightClicked = sprite.model
-			var menu = this.rightClickMenus[sprite.model.get('node').get('type')] || this.rightClickMenus["Default"];
+			var menu = this.rightClickMenus[sprite.model.type()] || this.rightClickMenus["Default"];
 			menu.showAt([e.getX(), e.getY()]);
 		}
 	},
@@ -471,7 +470,7 @@ Ext.define('GiniJS.controller.TopologyController', {
 		// remove any interfaces pointing to the deleted node 
 		var store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore');
 		var me = this;
-		if (node.get('node').get('type') !== "Subnet"){
+		if (node.type() !== "Subnet"){
 			store.each(function(con){
 				var iface = con.interface(node.property('name'));
 				if (!Ext.isEmpty(iface)){
@@ -554,8 +553,8 @@ Ext.define('GiniJS.controller.TopologyController', {
 		console.log(start, end);
 		var sm = start.model,
 			 em = end.model,
-			 startType = sm.get('node').get('type'),
-			 endType = em.get('node').get('type'),
+			 startType = sm.type(),
+			 endType = em.type(),
 			 success = false,
 			 errorMsg = undefined;
 
@@ -678,7 +677,7 @@ Ext.define('GiniJS.controller.TopologyController', {
 						if (em.connections().getCount() > 1){
 							var other = em.otherConnection(sm);
 							iface.setProperty('target', other.property('name'));
-							if (other.get('node').get('type') === "UML" || other.get('node').get('type') === "Router"){
+							if (other.type() === "UML" || other.type() === "Router"){
 								var other_iface = other.emptyInterface();
 								other_iface.setProperty('target', sm.property('name'));
 								other.set('iface', other_iface);
@@ -722,7 +721,7 @@ Ext.define('GiniJS.controller.TopologyController', {
 						if (sm.connections().getCount() > 1){
 							var other = sm.otherConnection(em);
 							iface.setProperty('target', other.property('name'));
-							if (other.get('node').get('type') === "UML" || other.get('node').get('type') === "Router"){
+							if (other.type() === "UML" || other.type() === "Router"){
 								var other_iface = other.emptyInterface();
 								other_iface.setProperty('target', em.property('name'));
 								other.set('iface', other_iface);
@@ -818,6 +817,16 @@ Ext.define('GiniJS.controller.TopologyController', {
 			});
 		});
 		return gsav;
+	},
+
+	topologyToJSON : function(){
+		var store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore'),
+			obj = [];
+		store.each(function(node){
+			obj.push(node.toJSON());
+		});
+		
+		return obj;
 	},
 
 	startTopology : function(){
@@ -996,7 +1005,90 @@ Ext.define('GiniJS.controller.TopologyController', {
 	},
 	
 	openTopology : function(data){
+		var obj = Ext.decode(data),
+			store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore'),
+			compstore = Ext.data.StoreManager.lookup('GiniJS.store.ComponentStore'),
+			comps = {},
+			comp,
+			recs = [],
+			cons = {},
+			mdl, 
+			sprite,
+			me = this;	
 		
+		Ext.each(obj, function(o){
+			mdl = GiniJS.model.TopologyNode.fromJSON(o);
+			cons[mdl.property('name')] = o.connections;
+			recs.push(mdl);
+			console.log(o);
+			if (!comps[o.type]){
+				console.log(compstore, compstore.findRecord('type', o.type));
+				comps[o.type] = compstore.findRecord('type', o.type);
+			}			
+			comp = comps[o.type];
+			
+			sprite = Ext.create('Ext.draw.Sprite', {
+				type: 'image',
+				x: o.x,
+				y: o.y,
+				id: o.id,
+				width: comp.get('width'),
+				height: comp.get('height'),
+				src: comp.get('icon'),
+				draggable: {
+					constrain: true,
+					constrainTo: me.canvas.getEl()
+				},
+				listeners : {
+					'click' : me.onNodeClick,
+					scope : me
+				},
+				model : mdl,
+				zIndex: 1
+			});
+			
+			sprite.label = Ext.create('Ext.draw.Sprite', {
+				type: 'text',
+				text: mdl.property('name'),
+				y: sprite.y + comp.get('height') + 10,
+				x: sprite.x + comp.get('width')/2 - (mdl.property('name').length * 6)/2
+			});
+			me.canvas.surface.add(sprite.label).show(true);
+			
+			// draw the power button on the left 
+			if (mdl.type() === "Router" || mdl.type() === "UML"){
+				var xOff = mdl.type() === "Router" ? 5 : 20,
+					yOff = mdl.type() === "Router" ? 2 : 5;
+				sprite.powerButton = Ext.create('Ext.draw.Sprite',{
+					x: xOff + sprite.x,
+					y: yOff + sprite.y + sprite.height/2 - 5,
+					type: 'circle',
+					'stroke-width' : 0.7,
+					'stroke': "#000000",
+					radius: 5,
+					fill: TOPOLOGY_COLORS['detached'],
+					zIndex: 2,
+					xOff: xOff,
+					yOff: yOff
+				});
+				me.canvas.surface.add(sprite.powerButton);
+			}
+		
+			mdl.set('sprite', sprite);
+			me.canvas.surface.add(sprite).show(true);
+		});	
+		store.loadRecords(recs);
+		
+		store.each(function(rec){
+			rec.connections().filterOnLoad = false;
+			recs = [],
+			others = cons[rec.property('name')];
+			Ext.each(others, function(o){
+				recs.push(store.getById(o));
+			});
+			rec.connections().loadRecords(recs);
+			me.redrawConnections(rec.get('sprite'));
+		});
 	}
 });
 	

@@ -5,7 +5,7 @@ Ext.define('GiniJS.model.TopologyNode', {
 	fields: [{
 		name: 'id'
 	}, {
-		name: 'node'
+		name: 'type'
 	}, {
 		name: 'iface'
 	}, {
@@ -41,7 +41,7 @@ Ext.define('GiniJS.model.TopologyNode', {
 	connectionsWith : function(type){
 		var cons = [];
 		this.connections().each(function(rec){
-			if (rec.get('node').get('type') === type)
+			if (rec.type() === type)
 				cons.push(rec);
 		});
 		return cons;
@@ -62,6 +62,7 @@ Ext.define('GiniJS.model.TopologyNode', {
 		});
 		return iface;
 	},
+	
 	interface : function(target){
 		var found;
 		this.interfaces().each(function(rec){
@@ -103,7 +104,66 @@ Ext.define('GiniJS.model.TopologyNode', {
 		return str;
 	},
 	
+	toJSON : function(){
+		var obj = {};
+		obj.id = this.get('id');
+		obj.x = this.get('sprite').x;
+		obj.y = this.get('sprite').y;
+		obj.type = this.get('type');
+		
+		obj.properties = [];
+		this.properties().each(function(prop){
+			obj.properties.push(prop.toJSON());
+		});
+		
+		obj.interfaces = [];
+		this.interfaces().each(function(iface){
+			obj.interfaces.push(iface.toJSON());
+		});
+		
+		obj.connections = [];
+		this.connections().each(function(con){
+			obj.connections.push(con.getId());
+		});
+		
+		return obj;
+	},
+	
 	type : function(){
-		return this.get('node').get('type');
+		return this.get('type');
+	},
+	
+	statics : {	
+		fromJSON : function(obj){
+			var model = Ext.create('GiniJS.model.TopologyNode', {
+				id: obj.id,
+				connection_sprites: [],
+				type: obj.type
+			});
+			
+			model.connections().filterOnLoad = false;
+			
+			model.properties().filterOnLoad = false;
+			model.properties().loadData(obj.properties);
+			
+			model.interfaces().filterOnLoad = false;
+			var ifaces = [],
+				iface;
+			Ext.each(obj.interfaces, function(i){
+				iface = Ext.create('GiniJS.model.Interface', {
+					id: i.id,
+					tid: i.tid,
+					subnet: i.subnet
+				});
+				iface.properties().filterOnLoad = false;
+				iface.properties().loadData(i.properties);
+				
+				ifaces.push(iface);
+			});
+			model.interfaces().loadRecords(ifaces);
+			model.set('iface', iface);
+			
+			return model;
+		}
 	}
 });
