@@ -36,15 +36,18 @@ Ext.define('GiniJS.controller.TopologyController', {
 			scope : this
 		});
 		
-		this.routers = 0;
-		this.umls = 0;
-		this.switches = 0;
-		this.subnets = 0;
-		this.firewalls = 0;
-		this.uml_freedoss = 0;
-		this.uml_androids = 0;
-		this.mobiles = 0;
-		this.wireless_access_points = 0;
+		this.count = {
+			"Router" : 0,
+			"UML" : 0,
+			"Switch" : 0,
+			"Subnet" : 0,
+			"Firewall" : 0,
+			"UML_FreeDOS" : 0,
+			"Mobile" : 0,
+			"UML_Android" : 0,
+			"Firewall" : 0,
+			"Wireless_access_point" : 0
+		};
 		
 		this.rightClickMenus = {};
 		this.rightClickMenus["UML"] = Ext.create('Ext.menu.Menu', {
@@ -152,7 +155,9 @@ Ext.define('GiniJS.controller.TopologyController', {
 		
 		node.set('sprite', sprite);
 		canvas.surface.add(sprite).show(true);
-			 
+		
+		node.setProperty('name', data.componentData.type + "_" + (++this.count[data.componentData.type]), true);
+		
 		switch ( data.componentData.type ){
 			case "Router":
 				this.onInsertRouter(node);
@@ -248,13 +253,10 @@ Ext.define('GiniJS.controller.TopologyController', {
 	
 	onInsertRouter : function(data){
 		console.log("Inserting router ... ", data);
-		data.setProperty('name', 'Router_' + (++this.routers), true);
 	},
 	
 	onInsertUML : function(data){
 		console.log("Inserting UML ... ", data);
-		data.setProperty('name', 'UML_' + (++this.umls), true);
-		
 		// Are these dynamically allocated ?
 		data.setProperty('filesystem', 'root_fs_beta2', false);
 		data.setProperty('filetype', 'cow', false);
@@ -263,40 +265,33 @@ Ext.define('GiniJS.controller.TopologyController', {
 	
 	onInsertSwitch : function(data){
 		console.log("Inserting Switch ... ", data);
-		data.setProperty('name', 'Switch_' + (++this.switches), true);
 		data.setProperty('Hub mode', false, true); 
 	},
 	
 	onInsertSubnet : function(data){
 		console.log("Inserting Subnet ... ", data);
-		data.setProperty('name', 'Subnet_' + (++this.subnets), true);
 		data.setProperty('mask', '255.255.255.0');
 		data.setProperty('subnet', '192.168.' + this.subnets +'.0');
 	},
 	
 	onInsertFreeDOS : function(data){
 		console.log("Inserting Free DOS ... ", data);
-		data.setProperty('name', 'UML_FreeDOS_' + (++this.uml_freedoss), true);
 	},
 	
 	onInsertMobile : function(data){
 		console.log("Inserting Mobile ... ", data);
-		data.setProperty('name', 'Mobile_' + (++this.mobiles), true);
 	},
 	
 	onInsertUMLAndroid : function(data){
 		console.log("Inserting Android UML ... ", data);
-		data.setProperty('name', 'UML_Android_' + (++this.uml_androids), true);
 	},
 	
 	onInsertFirewall : function(data){
 		console.log("Inserting Firewall ... ", data);
-		data.setProperty('name', 'Firewall_' + (++this.firewalls), true);
 	},
 	
 	onInsertWirelessAccessPoint : function(data){
 		console.log("Inserting Wirless Access Point ... ", data);
-		data.setProperty('name', 'Wireless_access_point_' + (++this.wireless_access_points), true);
 	},
 	
 	getSelectionBox : function(node){
@@ -992,16 +987,9 @@ Ext.define('GiniJS.controller.TopologyController', {
 		});
 		
 		store.remove(store.getRange());
-		
-		this.routers = 0;
-		this.umls = 0;
-		this.switches = 0;
-		this.subnets = 0;
-		this.firewalls = 0;
-		this.uml_freedoss = 0;
-		this.uml_androids = 0;
-		this.mobiles = 0;
-		this.wireless_access_points = 0;
+		for (var c in this.count){
+			this.count[c] = 0;
+		}
 	},
 	
 	openTopology : function(data){
@@ -1015,6 +1003,9 @@ Ext.define('GiniJS.controller.TopologyController', {
 			mdl, 
 			sprite,
 			me = this;	
+		
+		// blank slate :)
+		this.newTopology();
 		
 		Ext.each(obj, function(o){
 			mdl = GiniJS.model.TopologyNode.fromJSON(o);
@@ -1076,6 +1067,7 @@ Ext.define('GiniJS.controller.TopologyController', {
 		
 			mdl.set('sprite', sprite);
 			me.canvas.surface.add(sprite).show(true);
+			me.count[o.type]++;
 		});	
 		store.loadRecords(recs);
 		
