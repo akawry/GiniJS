@@ -271,11 +271,16 @@ Ext.define('GiniJS.controller.ActionController', {
 	},
 	
 	onLoad : function(res){
-		this.application.fireEvent('log', 'Opening ' + res);
-		GiniJS.globals.open = res;
 		
-		/**
-		 * TODO: get the contents of the file and then invoke the openTopology method on the TopologyController 
-		 */
+		this.application.fireEvent('log', 'Opening ' + res.name +"...");
+		
+		var reader = new FileReader(),
+			me = this;
+		reader.onloadend = function(e){
+			GiniJS.globals.open = res.name;
+			me.getController('TopologyController').openTopology(e.target.result);
+		};
+		
+		reader.readAsBinaryString(res);
 	}
 });

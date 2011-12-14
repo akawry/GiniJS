@@ -993,6 +993,10 @@ Ext.define('GiniJS.controller.TopologyController', {
 		this.uml_androids = 0;
 		this.mobiles = 0;
 		this.wireless_access_points = 0;
+	},
+	
+	openTopology : function(data){
+		
 	}
 });
 	

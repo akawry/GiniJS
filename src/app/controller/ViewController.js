@@ -91,33 +91,8 @@ Ext.define('GiniJS.controller.ViewController', {
 	onOpen : function(){
 		var me = this;
 		if (!Ext.isDefined(this.openForm)){
-			this.openForm = Ext.create('Ext.form.Panel', {
-				alias: 'widget.fileopen',
-				title: 'Open',
-				floating: true,
-				closable: true,
-				frame: true,
-				width: 400,
-				closeAction: 'hide',
-				items: [{
-			        xtype: 'filefield',
-			        itemId: 'gsavfile',
-			        fieldLabel: 'File',
-			        labelWidth: 50,
-			        msgTarget: 'side',
-			        allowBlank: false,
-			        anchor: '100%',
-			        buttonText: 'Browse'
-			    }],
-				buttons: [{
-					text: 'Open',
-					handler : function(){
-						var panel = this.up('panel'),
-							file = panel.getComponent('gsavfile').getValue();
-						me.application.fireEvent('load', file);
-						panel.hide();
-					}
-				}]
+			this.openForm = Ext.create('GiniJS.view.OpenDialogue', {
+				application: this.application
 			});
 		}
 		
@@ -127,32 +102,9 @@ Ext.define('GiniJS.controller.ViewController', {
 	onSaveAs : function(callback){
 		var me = this;
 		if (!Ext.isDefined(this.saveForm)){
-			this.saveForm = Ext.create('Ext.form.Panel', {
-				alias: 'widget.filesave',
-				title: 'Save',
-				floating: true,
-				closable: true,
-				frame: true,
-				width: 400,
-				closeAction: 'hide',
-				items: [{
-			        xtype: 'textfield',
-			        itemId: 'gsavfile',
-			        fieldLabel: 'File',
-			        labelWidth: 50,
-			        msgTarget: 'side',
-			        allowBlank: false,
-			        anchor: '100%'
-			    }],
-				buttons: [{
-					text: 'Save',
-					handler : function(){
-						var panel = this.up('panel');
-						GiniJS.globals.open = panel.getComponent('gsavfile').getValue();
-						me.application.fireEvent('save', callback);
-						panel.hide();
-					}
-				}]
+			this.saveForm = Ext.create('GiniJS.view.SaveDialogue', {
+				application: this.application,
+				callback: callback
 			});
 		}
 
