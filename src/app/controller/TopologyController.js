@@ -271,7 +271,7 @@ Ext.define('GiniJS.controller.TopologyController', {
 	onInsertSubnet : function(data){
 		console.log("Inserting Subnet ... ", data);
 		data.setProperty('mask', '255.255.255.0');
-		data.setProperty('subnet', '192.168.' + this.subnets +'.0');
+		data.setProperty('subnet', '192.168.' + this.count['Subnet'] +'.0');
 	},
 	
 	onInsertFreeDOS : function(data){
@@ -1081,6 +1081,8 @@ Ext.define('GiniJS.controller.TopologyController', {
 			rec.connections().loadRecords(recs);
 			me.redrawConnections(rec.get('sprite'));
 		});
+		
+		this.application.fireEvent('log', 'Successfully loaded file.');
 	}
 });
 	
