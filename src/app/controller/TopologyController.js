@@ -257,6 +257,7 @@ Ext.define('GiniJS.controller.TopologyController', {
 			}
 		}
 		this.redrawConnections(data.sprite);
+		this.storeLocal();
 	},
 	
 	onInsertRouter : function(data){
@@ -570,9 +571,13 @@ Ext.define('GiniJS.controller.TopologyController', {
 
 				if (sm.connections().getCount() > 0){
 					errorMsg = "UML cannot have more than one connection!";
-				} else {
-					if (endType === "Switch" || endType == "Subnet"){
+				} else if (endType === "Switch"){
+					success = true;
+				} else if (endType === "Subnet"){
+					if (em.connections().getCount() < 2){
 						success = true;
+					} else {
+						errorMsg = "Subnet cannot have more than two connections!";
 					}
 				}
 	
@@ -992,21 +997,15 @@ Ext.define('GiniJS.controller.TopologyController', {
 	
 	newTopology : function(){
 		var store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore');
-		store.each(function(rec){
-			var sprite = rec.get('sprite');
-			sprite.destroy();
-			Ext.each(rec.get('connection_sprites'), function(con){
-				if (con.destroy)
-					con.destroy();
-			});
-			sprite.label.destroy();
-			if (sprite.selectionBox)
-				sprite.selectionBox.destroy();
-			if (sprite.powerButton)
-				sprite.powerButton.destroy();
-		});
-		
 		store.remove(store.getRange());
+		
+		this.canvas.surface.removeAll(true);
+		
+		this.canvas.surface.destroy();
+		console.log(this.canvas.surface);
+		this.canvas.createSurface();
+		console.log(this.canvas.surface);
+		
 		for (var c in this.count){
 			this.count[c] = 0;
 		}
@@ -1025,18 +1024,19 @@ Ext.define('GiniJS.controller.TopologyController', {
 			comp,
 			recs = [],
 			cons = {},
+			oldids = {},
 			mdl, 
 			sprite,
 			me = this;	
-		
-		// blank slate :)
+
 		this.newTopology();
-		
+				
 		Ext.each(obj, function(o){
 			mdl = GiniJS.model.TopologyNode.fromJSON(o);
 			cons[mdl.property('name')] = o.connections;
 			recs.push(mdl);
-			console.log(o);
+			oldids[o.id] = mdl;
+			
 			if (!comps[o.type]){
 				console.log(compstore, compstore.findRecord('type', o.type));
 				comps[o.type] = compstore.findRecord('type', o.type);
@@ -1103,7 +1103,7 @@ Ext.define('GiniJS.controller.TopologyController', {
 			recs = [],
 			others = cons[rec.property('name')];
 			Ext.each(others, function(o){
-				recs.push(store.getById(o));
+				recs.push(oldids[o]);
 			});
 			rec.connections().loadRecords(recs);
 			me.redrawConnections(rec.get('sprite'));
@@ -1111,6 +1111,8 @@ Ext.define('GiniJS.controller.TopologyController', {
 		
 		var msg = name ? "Successfully loaded " + name : "Successfully restored previous topology.";
 		this.application.fireEvent('log', msg);
+		
+		this.storeLocal();
 	},
 	
 	onUpdateOptions : function(opts){

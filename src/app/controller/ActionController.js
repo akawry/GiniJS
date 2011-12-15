@@ -131,7 +131,27 @@ Ext.define('GiniJS.controller.ActionController', {
 	},
 	
 	onExport : function(){
+		var canvas = Ext.ComponentQuery.query('canvasview')[0],
+			svgel = canvas.surface.el.dom,
+			serializer = new XMLSerializer(),
+			svg;
+		console.log(svgel);
+		try {
+			svg = serializer.serializeToString(svgel);
+		} catch (exception) {
+			this.application.fireEvent('log', 'Could not export the topology: '+exception);
+		}
 		
+		Ext.Ajax.request({
+			url: '/download',
+			params : {
+				filename: 'test.svg',
+				filedata : svg
+			},
+			success : function(){
+				window.location = "download?filename=test.svg";
+			}
+		});
 	},
 	
 	onNewProject : function(){
@@ -283,7 +303,13 @@ Ext.define('GiniJS.controller.ActionController', {
 			me = this;
 		reader.onloadend = function(e){
 			GiniJS.globals.open = res.name;
-			me.getController('TopologyController').openTopology(Ext.decode(e.target.result), res.name);
+			try {
+				var topology = Ext.decode(e.target.result);
+				me.getController('TopologyController').openTopology(topology, res.name);
+			} catch (exception){
+				Ext.Msg.alert('Error', 'The file was not a valid GiniJS save file.');
+				me.application.fireEvent('log', 'Could not load the file.');
+			}
 		};
 		
 		reader.readAsBinaryString(res);

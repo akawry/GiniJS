@@ -135,8 +135,9 @@ Ext.define('GiniJS.model.TopologyNode', {
 	
 	statics : {	
 		fromJSON : function(obj){
+			var id = Ext.id();
 			var model = Ext.create('GiniJS.model.TopologyNode', {
-				id: obj.id,
+				id: id,
 				connection_sprites: [],
 				type: obj.type
 			});
@@ -151,8 +152,8 @@ Ext.define('GiniJS.model.TopologyNode', {
 				iface;
 			Ext.each(obj.interfaces, function(i){
 				iface = Ext.create('GiniJS.model.Interface', {
-					id: i.id,
-					tid: i.tid,
+					id: Ext.id(),
+					tid: id,
 					subnet: i.subnet
 				});
 				iface.properties().filterOnLoad = false;
