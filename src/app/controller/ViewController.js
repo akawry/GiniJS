@@ -37,10 +37,31 @@ Ext.define('GiniJS.controller.ViewController', {
 	},
 	 
 	refreshViews : function(e){
-		var store = Ext.isEmpty(e.selected) ? Ext.data.StoreManager.lookup('GiniJS.store.EmptyProperties') : e.selected.properties();
-		Ext.ComponentQuery.query('propertyview')[0].reconfigure(store);
-		store = (Ext.isEmpty(e.selected) || Ext.isEmpty(e.selected.get('iface'))) ? Ext.data.StoreManager.lookup('GiniJS.store.EmptyInterfaces') : e.selected.get('iface').properties();
-		Ext.ComponentQuery.query('interfaceview')[0].reconfigure(store);
+		var pstore, istore;
+		if (Ext.isEmpty(e.selected)){
+			pstore = Ext.data.StoreManager.lookup('GiniJS.store.EmptyProperties');
+			istore = Ext.data.StoreManager.lookup('GiniJS.store.EmptyInterfaces');
+		} else {
+			pstore = e.selected.properties();
+			if (Ext.isEmpty(e.selected.get('iface'))){
+				istore = Ext.data.StoreManager.lookup('GiniJS.store.EmptyInterfaces');
+			} else {
+				istore = e.selected.get('iface').properties();
+			}
+		}
+		var pview = Ext.ComponentQuery.query('propertyview')[0];
+		if (pview.rendered === true){
+			pview.reconfigure(pstore);
+		} else {
+			console.log("property view not rendered yet ... ");
+		}
+		
+		var iview = Ext.ComponentQuery.query('interfaceview')[0];
+		if (iview.rendered === true){
+			iview.reconfigure(istore);
+		} else {
+			console.log("iface view not rendered yet ... ");
+		}
 	},
 	
 	onConsole : function(e){
@@ -80,7 +101,12 @@ Ext.define('GiniJS.controller.ViewController', {
 	},
 	
 	onLog : function(msg){
-		Ext.ComponentQuery.query('logview')[0].log(msg);
+		var logview = Ext.ComponentQuery.query('logview')[0];
+		if (logview.rendered === true){
+			logview.log(msg);
+		} else {
+			console.log("log view not rendered yet ... ");
+		}
 	},
 	
 	onLogin : function(user){

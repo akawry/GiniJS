@@ -6,11 +6,14 @@ Ext.Loader.setConfig({
 	}
 });
 
+var options = localStorage['options'];
+options = options ? Ext.decode(options) : undefined;
+
 Ext.ns('GiniJS.globals');
 Ext.apply(GiniJS.globals, {
 	topologyState : "off",
 	gserverVersion: '1.0.1',
-	options: {
+	options: options || {
 		'showcomponentnames' : 'on',
 		'showgrid' : 'off',
 		'rememberlayout' : 'off',

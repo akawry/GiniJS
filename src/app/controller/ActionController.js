@@ -264,6 +264,9 @@ Ext.define('GiniJS.controller.ActionController', {
 				if (res.error){
 					Ext.Msg.alert("Error", res.err);
 				} else {
+					if (user === '')
+						user = "Guest";
+						
 					this.application.fireEvent('login', user);
 					GiniJS.globals.user = user;
 				}
@@ -280,7 +283,7 @@ Ext.define('GiniJS.controller.ActionController', {
 			me = this;
 		reader.onloadend = function(e){
 			GiniJS.globals.open = res.name;
-			me.getController('TopologyController').openTopology(e.target.result);
+			me.getController('TopologyController').openTopology(Ext.decode(e.target.result), res.name);
 		};
 		
 		reader.readAsBinaryString(res);

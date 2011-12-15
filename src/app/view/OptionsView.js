@@ -172,7 +172,7 @@ Ext.define('GiniJS.view.OptionsView', {
 			Ext.apply(GiniJS.globals.options, win.allOptions);
 			Ext.apply(GiniJS.globals.options, vals);
 			win.fireEvent('updateoptions', GiniJS.globals.options);
-			console.log(GiniJS.globals.options);
+			localStorage['options'] = Ext.encode(GiniJS.globals.options);
 		}
 	}]
 });

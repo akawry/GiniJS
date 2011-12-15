@@ -4,7 +4,8 @@ Ext.define('GiniJS.view.AppView', {
 		loginView.show();
 		GiniJS.view.AppView.superclass.constructor.call(this, config);
 	},
-	extend: 'Ext.container.Viewport',	
+	extend: 'Ext.container.Viewport',
+	alias: 'widget.appview',	
 	plain: true, 
 	layout: {
 		type: 'border'

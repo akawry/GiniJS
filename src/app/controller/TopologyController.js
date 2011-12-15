@@ -16,7 +16,7 @@ Ext.define('GiniJS.controller.TopologyController', {
 				'rightclick' : this.onNodeRightClick,
 				'doubleclick': this.onNodeDoubleClick,
 				'afterrender' : function(canvas){
-					this.canvas = canvas
+					this.canvas = canvas;
 				}
 			}, 
 			'interfaceview > toolbar > button' : {
@@ -36,6 +36,7 @@ Ext.define('GiniJS.controller.TopologyController', {
 		this.application.on({
 			'starttopology' : this.startTopology,
 			'stoptopology' : this.stopTopology,
+			'login' : this.onLogin,
 			scope : this
 		});
 		
@@ -221,7 +222,7 @@ Ext.define('GiniJS.controller.TopologyController', {
 		}
 		
 		store.add(node);			
-		// store.sync();			
+		this.storeLocal();			
 	},
 	
 	onDragNode : function(ddSource, e, data, canvas){
@@ -760,7 +761,7 @@ Ext.define('GiniJS.controller.TopologyController', {
 				this.onDrawConnection(start, end);
 			}
 			
-			// Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore').sync();
+			this.storeLocal();
 			
 		} else {
 			Ext.Msg.alert("Error", errorMsg || ("Cannot connect " + startType + " and " + endType));
@@ -1013,11 +1014,12 @@ Ext.define('GiniJS.controller.TopologyController', {
 		this.application.fireEvent('refreshviews', {
 			selected: null
 		});
+		
+		this.storeLocal();
 	},
 	
-	openTopology : function(data){
-		var obj = Ext.decode(data),
-			store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore'),
+	openTopology : function(obj, name){
+		var store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore'),
 			compstore = Ext.data.StoreManager.lookup('GiniJS.store.ComponentStore'),
 			comps = {},
 			comp,
@@ -1067,7 +1069,9 @@ Ext.define('GiniJS.controller.TopologyController', {
 				y: sprite.y + comp.get('height') + 10,
 				x: sprite.x + comp.get('width')/2 - (mdl.property('name').length * 6)/2
 			});
-			me.canvas.surface.add(sprite.label).show(true);
+			me.canvas.surface.add(sprite.label);
+			if (GiniJS.globals.options['showcomponentnames'] === "on")
+				sprite.label.show(true);
 			
 			// draw the power button on the left 
 			if (mdl.type() === "Router" || mdl.type() === "UML"){
@@ -1104,7 +1108,9 @@ Ext.define('GiniJS.controller.TopologyController', {
 			rec.connections().loadRecords(recs);
 			me.redrawConnections(rec.get('sprite'));
 		});
-		this.application.fireEvent('log', 'Successfully loaded file.');
+		
+		var msg = name ? "Successfully loaded " + name : "Successfully restored previous topology.";
+		this.application.fireEvent('log', msg);
 	},
 	
 	onUpdateOptions : function(opts){
@@ -1129,6 +1135,28 @@ Ext.define('GiniJS.controller.TopologyController', {
 		});
 		
 		this.canvas.updateGrid();
+	},
+	
+	storeLocal : function(){
+		if (GiniJS.globals.options['rememberlayout'] === "on"){
+			var active = Ext.decode(localStorage['activeTopologies']);
+			active[GiniJS.globals.user] = this.topologyToJSON();
+			localStorage['activeTopologies'] = Ext.encode(active);
+		}
+	},
+	
+	onLogin : function(user){
+		if (GiniJS.globals.options['rememberlayout'] === 'on'){
+			var active = Ext.decode(localStorage['activeTopologies']);
+			if (Ext.isEmpty(active)){
+				active = {};
+				localStorage['activeTopologies'] = Ext.encode(active);
+			}
+			
+			if (!Ext.isEmpty(active[user])){
+				this.openTopology(active[user]);
+			}
+		}
 	}
 });
 	
