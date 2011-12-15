@@ -12,19 +12,18 @@ var generalForm = Ext.create('Ext.form.Panel', {
 		items : [{
 			xtype : 'checkbox',
 			boxLabel : 'Show component names',
-			name: 'showcomponentnames'
+			name: 'showcomponentnames',
+			checked: GiniJS.globals.options['showcomponentnames'] === "on"
 		}, {
 			xtype : 'checkbox',
 			boxLabel : 'Show grid',
-			name: 'showgrid'
-		}, {
-			xtype : 'checkbox',
-			boxLabel : 'Use smoothing',
-			name: 'usesmoothing'
+			name: 'showgrid',
+			checked: GiniJS.globals.options['showgrid'] === "on"
 		}, {
 			xtype : 'checkbox',
 			boxLabel : 'Remember and restore layout',
-			name: 'rememberlayout'
+			name: 'rememberlayout',
+			checked: GiniJS.globals.options['rememberlayout'] === "on"
 		}, {
 			xtype : 'fieldcontainer',
 			fieldLabel : 'Grid color',
@@ -35,19 +34,23 @@ var generalForm = Ext.create('Ext.form.Panel', {
 		items : [{
 			xtype : 'checkbox',
 			boxLabel : 'Auto-routing',
-			name: 'autorouting'
+			name: 'autorouting',
+			checked: GiniJS.globals.options['autorouting'] === "on"
 		}, {
 			xtype : 'checkbox',
 			boxLabel : 'Auto-generate IP/MAC addresses',
-			name: 'autogenerate'
+			name: 'autogenerate',
+			checked: GiniJS.globals.options['autogenerate'] === "on"
 		}, {
 			xtype : 'checkbox',
 			boxLabel : 'Compile before running',
-			name: 'compile'
+			name: 'compile',
+			checked: GiniJS.globals.options['compile'] === "on"
 		}, {
 			xtype : 'checkbox',
 			boxLabel : 'Use glowing lights',
-			name: 'glowinglights'
+			name: 'glowinglights',
+			checked: GiniJS.globals.options['glowinglights'] === "on"
 		}]
 	})],
 });
@@ -133,6 +136,16 @@ var serverForm = Ext.create('Ext.form.Panel', {
 
 Ext.define('GiniJS.view.OptionsView', {
 	extend : 'Ext.window.Window',
+	alias: 'widget.optionsview',
+	allOptions: {
+		'showcomponentnames' : 'off',
+		'showgrid' : 'off',
+		'rememberlayout' : 'off',
+		'autorouting' : 'off',
+		'autogenerate' : 'off',
+		'compile' : 'off',
+		'glowinglights' : 'off'
+	},
 	title : 'Options',
 	closable : true,
 	floating : true,
@@ -155,9 +168,11 @@ Ext.define('GiniJS.view.OptionsView', {
 			win.hide();
 			var vals = generalForm.getValues();
 			vals['gridcolor'] = colorGrid.getValue();
-			Ext.apply(vals, serverForm.getValues());
-			
-			this.fireEvent('updateoptions', vals);
+			Ext.apply(vals, serverForm.getValues());		
+			Ext.apply(GiniJS.globals.options, win.allOptions);
+			Ext.apply(GiniJS.globals.options, vals);
+			win.fireEvent('updateoptions', GiniJS.globals.options);
+			console.log(GiniJS.globals.options);
 		}
 	}]
 });

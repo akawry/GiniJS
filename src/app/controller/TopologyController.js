@@ -27,6 +27,9 @@ Ext.define('GiniJS.controller.TopologyController', {
 			},
 			'taskview > button' : {
 				'kill' : this.onKill
+			},
+			'optionsview' : {
+				'updateoptions' : this.onUpdateOptions
 			}
 		});
 
@@ -194,7 +197,9 @@ Ext.define('GiniJS.controller.TopologyController', {
 			y: y + data.componentData.height + 10,
 			x: x + data.componentData.width/2 - (node.property('name').length * 6)/2
 		});
-		canvas.surface.add(sprite.label).show(true);
+		canvas.surface.add(sprite.label);
+		if (GiniJS.globals.options['showcomponentnames'] === "on")
+			sprite.label.show(true);
 		
 		// draw the power button on the left 
 		if (data.componentData.type === "Router" || data.componentData.type === "UML"){
@@ -233,7 +238,9 @@ Ext.define('GiniJS.controller.TopologyController', {
 			x: sprite.x + sprite.width/2 - (sprite.label.text.length * 6)/2,
 			y: sprite.y + sprite.height + 10
 		});
-		sprite.label.redraw();
+		if (GiniJS.globals.options['showcomponentnames'] === "on")
+			sprite.label.redraw();
+			
 		if (this.dragStart === sprite && sprite.selectionBox){
 			sprite.selectionBox.destroy();
 			sprite.selectionBox = this.getSelectionBox(sprite);
@@ -244,7 +251,7 @@ Ext.define('GiniJS.controller.TopologyController', {
 				x: sprite.powerButton.xOff + sprite.x,
 				y: sprite.powerButton.yOff + sprite.y + sprite.height/2 - 5
 			});
-			if (GiniJS.globals.topologyState === "running"){
+			if (GiniJS.globals.topologyState === "running" && GiniJS.globals.options['glowinglights'] === "on"){
 				sprite.powerButton.redraw();
 			}
 		}
@@ -829,46 +836,12 @@ Ext.define('GiniJS.controller.TopologyController', {
 			var taskStore = Ext.data.StoreManager.lookup('GiniJS.store.TaskStore');
 			taskStore.remove(taskStore.getRange());
 			
+			if (GiniJS.globals.options['autogenerate'] === "on"){
+				console.log("Generating ips and macs ... ");
+				this.generateIPsAndMACs();
+			}
+			
 			var store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore');
-			
-			// generate IPs and MACs
-			var me = this;
-			store.each(function(rec){
-				if (rec.type() === "UML"){
-					var con = rec.connections().first();
-					if (con){
-						if (con.type() === "Subnet"){
-							me.generateIP(rec.interfaces().first(), con, rec);
-							me.generateMAC(rec.interfaces().first(), rec);
-							rec.interfaces().first().properties().each(function(prop){
-								prop.commit();
-							});
-						} else if (con.type() === "Switch") {
-							var subnet = con.otherConnection(rec, "Subnet");
-							if (subnet){
-								me.generateIP(rec.interfaces().first(), subnet, rec);
-								me.generateMAC(rec.interfaces().first(), rec);
-								rec.interfaces().first().properties().each(function(prop){
-									prop.commit();
-								});
-							}
-						}
-					}
-				} else if (rec.type() === "Router"){
-					rec.interfaces().each(function(iface){
-						var target = store.getNodeByName(iface.property('target'));
-						if (target){
-							var subnet = me.subnetBetween(rec, target);
-							me.generateIP(iface, subnet, rec);
-							me.generateMAC(iface, rec);
-							iface.properties().each(function(prop){
-								prop.commit();
-							});
-						}
-					});
-				}
-			});
-			
 			store.each(function(rec){
 				if (rec.type() === "Router" || rec.type() === "UML"){
 					taskStore.loadData([{
@@ -879,7 +852,9 @@ Ext.define('GiniJS.controller.TopologyController', {
 					rec.get('sprite').powerButton.setAttributes({
 						fill: TOPOLOGY_COLORS['detached']
 					});
-					rec.get('sprite').powerButton.show(true);
+					if (GiniJS.globals.options['glowinglights'] === "on"){
+						rec.get('sprite').powerButton.show(true);
+					}
 				}
 				rec.get('sprite').dd.lock();
 			});
@@ -916,7 +891,9 @@ Ext.define('GiniJS.controller.TopologyController', {
 		node.get('sprite').powerButton.setAttributes({
 			fill: TOPOLOGY_COLORS['detached']
 		});
-		node.get('sprite').powerButton.redraw();
+		if (GiniJS.globals.options['glowinglights'] === "on"){
+			node.get('sprite').powerButton.show(true);
+		}
 		
 		var taskStore = Ext.data.StoreManager.lookup('GiniJS.store.TaskStore'),
 			task = taskStore.findRecord('name', cons.title);
@@ -931,7 +908,9 @@ Ext.define('GiniJS.controller.TopologyController', {
 				rec.get('sprite').powerButton.setAttributes({
 					fill: TOPOLOGY_COLORS['killed']
 				});
-				rec.get('sprite').powerButton.redraw();	
+				if (GiniJS.globals.options['glowinglights'] === "on"){
+					rec.get('sprite').powerButton.show(true);
+				}
 			}
 		});
 	},
@@ -957,6 +936,46 @@ Ext.define('GiniJS.controller.TopologyController', {
 			mac += "03:" + (num < 16 ? "0" : "" ) + toHex(num) + ":00:" + (idx < 16 ? "0" : "") + toHex(idx);
 		}
 		iface.setProperty('mac', mac);
+	},
+	
+	generateIPsAndMACs : function(){
+		var store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore'),
+			me = this;
+		store.each(function(rec){
+			if (rec.type() === "UML"){
+				var con = rec.connections().first();
+				if (con){
+					if (con.type() === "Subnet"){
+						me.generateIP(rec.interfaces().first(), con, rec);
+						me.generateMAC(rec.interfaces().first(), rec);
+						rec.interfaces().first().properties().each(function(prop){
+							prop.commit();
+						});
+					} else if (con.type() === "Switch") {
+						var subnet = con.otherConnection(rec, "Subnet");
+						if (subnet){
+							me.generateIP(rec.interfaces().first(), subnet, rec);
+							me.generateMAC(rec.interfaces().first(), rec);
+							rec.interfaces().first().properties().each(function(prop){
+								prop.commit();
+							});
+						}
+					}
+				}
+			} else if (rec.type() === "Router"){
+				rec.interfaces().each(function(iface){
+					var target = store.getNodeByName(iface.property('target'));
+					if (target){
+						var subnet = me.subnetBetween(rec, target);
+						me.generateIP(iface, subnet, rec);
+						me.generateMAC(iface, rec);
+						iface.properties().each(function(prop){
+							prop.commit();
+						});
+					}
+				});
+			}
+		});
 	},
 	
 	subnetBetween : function(a, b){
@@ -990,6 +1009,10 @@ Ext.define('GiniJS.controller.TopologyController', {
 		for (var c in this.count){
 			this.count[c] = 0;
 		}
+		
+		this.application.fireEvent('refreshviews', {
+			selected: null
+		});
 	},
 	
 	openTopology : function(data){
@@ -1081,8 +1104,31 @@ Ext.define('GiniJS.controller.TopologyController', {
 			rec.connections().loadRecords(recs);
 			me.redrawConnections(rec.get('sprite'));
 		});
-		
 		this.application.fireEvent('log', 'Successfully loaded file.');
+	},
+	
+	onUpdateOptions : function(opts){
+		var store = Ext.data.StoreManager.lookup('GiniJS.store.TopologyStore'),
+			sprite;
+		store.each(function(rec){
+			sprite = rec.get('sprite');
+			if (opts['showcomponentnames'] === "on"){
+				sprite.label.show(true);
+			} else {
+				sprite.label.hide(true);
+			}
+			
+			if (opts['glowinglights'] === "on" && GiniJS.globals.topologyState === "running"){
+				if (sprite.powerButton)
+					sprite.powerButton.show(true);
+			} else {
+				if (sprite.powerButton)
+					sprite.powerButton.hide(true);
+			}
+			
+		});
+		
+		this.canvas.updateGrid();
 	}
 });
 	

@@ -28,7 +28,6 @@ Ext.define('GiniJS.controller.ActionController', {
 				'Save' : this.onSave,
 				'Save As' : this.onSaveAs,
 				'Open' : this.onOpen,
-				'Send File' : this.onSendFile,
 				'Export' : this.onExport
 			},
 			
@@ -61,6 +60,10 @@ Ext.define('GiniJS.controller.ActionController', {
 	},	
 	
 	onNew : function(){
+		if (GiniJS.globals.topologyState !== "off"){
+			Ext.Msg.alert("Error", "Please stop the currently running topology first.");
+			return;
+		}
 		// preserve scope
 		var me = this;
 		var callback = function(){
@@ -107,6 +110,11 @@ Ext.define('GiniJS.controller.ActionController', {
 	},
 	
 	onOpen : function(){
+		if (GiniJS.globals.topologyState !== "off"){
+			Ext.Msg.alert("Error", "Please stop the currently running topology first.");
+			return;
+		}
+		
 		var me = this;
 		var callback = function(){
 			console.log("INITIATING OPEN");
@@ -120,10 +128,6 @@ Ext.define('GiniJS.controller.ActionController', {
 				callback();
 			}
 		}, this);
-	},
-	
-	onSendFile : function(){
-		
 	},
 	
 	onExport : function(){
@@ -270,7 +274,7 @@ Ext.define('GiniJS.controller.ActionController', {
 	
 	onLoad : function(res){
 		
-		this.application.fireEvent('log', 'Opening ' + res.name +"...");
+		this.application.fireEvent('log', 'Opening ' + res.name + "...");
 		
 		var reader = new FileReader(),
 			me = this;

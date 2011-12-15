@@ -37,6 +37,60 @@ Ext.define('GiniJS.view.CanvasView', {
 					me.fireEvent('doubleclick', e);
 				});
 			}
+		},
+		'resize' : function(me, width, height){
+			this.width = width;
+			this.height = height;
+			this.updateGrid();
+		}
+	},
+	updateGrid : function(width, height){
+		
+		Ext.each(this.grid, function(g){
+			g.destroy();
+		});
+		this.grid = [];
+
+		if (GiniJS.globals.options['showgrid'] === "on"){
+			console.log("here");
+			var gwidth = GiniJS.globals.options['gridwidth'],
+				gheight = GiniJS.globals.options['gridheight'],
+				xdivs = this.width / gwidth,
+				ydivs = this.height/gheight,
+				sprite, p;
+			for (var i = 0; i < xdivs; i++){
+				p = new Ext.XTemplate('M {startx},{starty} L {endx},{endy}').apply({
+					startx: i * gwidth,
+					starty: 0,
+					endx: i * gwidth,
+					endy: this.height
+				});
+				sprite = Ext.create('Ext.draw.Sprite', {
+					type: 'path',
+					path: p,
+					stroke: GiniJS.globals.options['gridcolor'] || "#DEDEDE",
+					'stroke-width' : 1
+				});
+				this.surface.add(sprite).show(true);
+				this.grid.push(sprite);
+			}
+			
+			for (var i = 0; i < ydivs; i++){
+				p = new Ext.XTemplate('M {startx},{starty} L {endx},{endy}').apply({
+					startx: 0,
+					starty: i * gheight,
+					endx: this.width,
+					endy: i * gheight
+				});
+				sprite = Ext.create('Ext.draw.Sprite', {
+					type: 'path',
+					path: p,
+					stroke: GiniJS.globals.options['gridcolor'] || "#DEDEDE",
+					'stroke-width' : 1
+				});
+				this.surface.add(sprite).show(true);
+				this.grid.push(sprite);
+			}
 		}
 	}
 });

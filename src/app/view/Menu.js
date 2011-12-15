@@ -14,8 +14,6 @@ Ext.define('GiniJS.view.Menu', {
 			}, {
 				text: 'Save As'
 			}, {
-				text: 'Send File'
-			}, {
 				text: 'Export'
 			}]
 		})
