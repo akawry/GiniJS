@@ -129,7 +129,6 @@ Ext.define('GiniJS.controller.ViewController', {
 		var me = this;
 		if (!Ext.isDefined(this.saveForm)){
 			this.saveForm = Ext.create('GiniJS.view.SaveDialogue', {
-				application: this.application,
 				callback: callback
 			});
 		}

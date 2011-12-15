@@ -68,7 +68,9 @@ Ext.define('GiniJS.controller.ActionController', {
 		var me = this;
 		var callback = function(){
 			me.getController('TopologyController').newTopology();
-		}
+			GiniJS.globals.open = undefined;
+		};
+		
 		Ext.Msg.confirm('Confirm', 'Save before closing?', function(btn){
 			if (btn === "yes"){
 				this.onSave(callback);
@@ -81,13 +83,18 @@ Ext.define('GiniJS.controller.ActionController', {
 	onSave : function(callback){
 		if (!Ext.isDefined(GiniJS.globals.open)){
 			console.log("saving as ... ");
-			this.application.fireEvent('saveas');
+			if (typeof callback !== "function"){
+				var me = this;
+				callback = function(fname){
+					GiniJS.globals.open = fname;
+					me.onSave();
+				};
+			}
+			this.application.fireEvent('saveas', callback);
 		} else {
 			// var gsav = this.getController('TopologyController').topologyToGSAV();
 			var obj = this.getController('TopologyController').topologyToJSON();
-			console.log("About to dump", obj);
 			var json = Ext.encode(obj);
-			console.log(json);
 			
 			Ext.Ajax.request({
 				url: '/download',
@@ -95,8 +102,8 @@ Ext.define('GiniJS.controller.ActionController', {
 					filename: GiniJS.globals.open,
 					filedata: json
 				},
-				success : function(){
-					window.location = 'download?filename='+GiniJS.globals.open;
+				success : function(res){
+					window.location = 'download?filename='+res.responseText;
 				}
 			});
 			this.application.fireEvent('log', 'Saved topology to '+ GiniJS.globals.open);
@@ -117,7 +124,6 @@ Ext.define('GiniJS.controller.ActionController', {
 		
 		var me = this;
 		var callback = function(){
-			console.log("INITIATING OPEN");
 			me.application.fireEvent('open');
 		};
 		
@@ -131,27 +137,32 @@ Ext.define('GiniJS.controller.ActionController', {
 	},
 	
 	onExport : function(){
-		var canvas = Ext.ComponentQuery.query('canvasview')[0],
-			svgel = canvas.surface.el.dom,
-			serializer = new XMLSerializer(),
-			svg;
-		console.log(svgel);
-		try {
-			svg = serializer.serializeToString(svgel);
-		} catch (exception) {
-			this.application.fireEvent('log', 'Could not export the topology: '+exception);
-		}
 		
-		Ext.Ajax.request({
-			url: '/download',
-			params : {
-				filename: 'test.svg',
-				filedata : svg
-			},
-			success : function(){
-				window.location = "download?filename=test.svg";
-			}
-		});
+		var me = this,
+			callback = function(fname){
+				var canvas = Ext.ComponentQuery.query('canvasview')[0],
+					svgel = canvas.surface.el.dom,
+					serializer = new XMLSerializer(),
+					svg;
+				console.log(svgel);
+				try {
+					svg = serializer.serializeToString(svgel);
+				} catch (exception) {
+					me.application.fireEvent('log', 'Could not export the topology: '+exception);
+				}
+				
+				Ext.Ajax.request({
+					url: '/download',
+					params : {
+						filename: fname,
+						filedata : svg
+					},
+					success : function(res){
+						window.location = "download?filename=" + res.responseText;
+					}
+				});
+			};
+		this.application.fireEvent('saveas', callback);
 	},
 	
 	onNewProject : function(){

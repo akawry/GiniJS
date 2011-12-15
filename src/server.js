@@ -64,7 +64,7 @@ app.post('/download', function(req, res){
 	console.log("Download request: "+fname+", "+data);
 	fs.open(fname, 'w', 0666, function(err, fd){
 		fs.writeSync(fd, data, 0);
-		res.json({}) // ok
+		res.send(fname);
 	});
 });
 

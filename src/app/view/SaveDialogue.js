@@ -20,9 +20,9 @@ Ext.define('GiniJS.view.SaveDialogue', {
 		text: 'Save',
 		handler : function(){
 			var panel = this.up('panel');
-			GiniJS.globals.open = panel.getComponent('gsavfile').getValue();
-			panel.application.fireEvent('save', panel.callback);
 			panel.hide();
+			if (typeof panel.callback === "function")
+				panel.callback.call(this, panel.getComponent('gsavfile').getValue());
 		}
 	}]
 });
